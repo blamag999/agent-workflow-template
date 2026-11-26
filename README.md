@@ -19,6 +19,7 @@ PLAN (Planner) -> CODE (Coder) -> REVIEW (Reviewer)
 - One work item = one branch `work/<ID>-<slug>` = one file `docs/agent/work/<ID>-<slug>.md`.
 - One session = one role = one log entry = one handoff.
 - Only the Planner merges, after the Reviewer approves. Max 3 review rounds.
+- Nothing stays local: every session ends with all work committed AND pushed to the remote branch.
 - Works in code mode (repo access) and chat mode (paste files, commit the returned work file).
 
 See `AGENTS.md` for the full rules.

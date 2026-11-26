@@ -28,5 +28,5 @@ Stop. Write the question in the log, set `next_role: Planner`, output NEXT PROMP
 - [ ] Verification run and results recorded
 - [ ] Log entry appended (never edit old ones)
 - [ ] Section A and front-matter updated (`head_sha` = latest commit)
-- [ ] Committed `[<ID>][coder] ...`
+- [ ] Committed `[<ID>][coder] ...` AND pushed to origin; working tree clean
 - [ ] NEXT PROMPT saved in Section A AND output in chat (full + short)

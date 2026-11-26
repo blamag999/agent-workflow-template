@@ -21,6 +21,8 @@ You are given ONE role per session. If the role is unclear, ask the human before
 3. Only one role holds the baton at a time (`next_role` in the work file front-matter).
 4. One session = one role = one log entry = one handoff. Then stop.
 5. Only the Planner merges, and only after the Reviewer's verdict is APPROVE.
+6. Nothing stays local. Before a session ends, ALL work (code, docs, work file) must be committed
+   AND pushed to the remote work branch. Unpushed work counts as not done.
 
 ## Session start (read in this order, nothing else unless told)
 
@@ -37,7 +39,9 @@ Review with the diff first: `git diff <base_sha>..<head_sha>`.
 1. Append ONE new entry to Section B of the work file (never edit old entries).
 2. Overwrite Section A (current state, open items, Read next, NEXT PROMPT) and the front-matter
    (`phase`, `next_role`, `round`, `head_sha`).
-3. Commit on the work branch with prefix `[<ID>][<role>] message`.
+3. Commit on the work branch with prefix `[<ID>][<role>] message`, then PUSH to `origin`.
+   Verify: `git status` is clean and `git log origin/<branch> -1` equals your `head_sha`.
+   Do this BEFORE outputting the NEXT PROMPT, so the next role finds everything on the repo.
 4. Output the NEXT PROMPT for the next role, in BOTH forms, in the chat answer:
    - full prompt (self-contained, for chat-only AIs)
    - short prompt (one line pointing to the work file, for AIs with repo access)
@@ -48,10 +52,11 @@ Review with the diff first: `git diff <base_sha>..<head_sha>`.
 
 ## Mode
 
-- Code mode (repo access): edit, commit and push yourself.
+- Code mode (repo access): edit, commit and push yourself. Never leave work only on the local machine.
 - Chat mode (no repo access): the human pastes this file, your role file and the work file.
   Return the COMPLETE updated work file in one code block (plus a patch if you are the Coder).
-  The human commits it.
+  The human commits AND pushes it. End your answer by reminding the human to push,
+  and do not hand off until the human confirms it is on the repo.
 
 ## Hand-off map
 

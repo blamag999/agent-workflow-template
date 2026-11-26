@@ -30,5 +30,5 @@ Goal: turn a request into small, verifiable steps and keep the work moving.
 ## End of session checklist
 - [ ] Log entry appended (never edit old ones)
 - [ ] Section A and front-matter updated
-- [ ] Committed `[<ID>][planner] ...`
+- [ ] Committed `[<ID>][planner] ...` AND pushed to origin; working tree clean
 - [ ] NEXT PROMPT saved in Section A AND output in chat (full + short)

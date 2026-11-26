@@ -15,10 +15,12 @@ work file (`NEXT PROMPT`) and output it in the chat answer in two forms.
 [SCOPE] Allowed: <...> | Not allowed: <...>
 [DONE WHEN] <verification command and expected result / criteria>
 [END OF SESSION] Append one log entry, overwrite Section A and front-matter, commit
-  `[<ID>][<role>] ...`, then output the NEXT PROMPT for the next role (full + short),
-  following AGENTS.md. Reply to the human in Vietnamese.
+  `[<ID>][<role>] ...`, PUSH to origin (nothing may stay only on the local machine),
+  then output the NEXT PROMPT for the next role (full + short), following AGENTS.md.
+  Reply to the human in Vietnamese.
 [MODE] Code mode: commit and push yourself. Chat mode: return the complete updated
-  work file in one code block (and a patch if you are the Coder).
+  work file in one code block (and a patch if you are the Coder); the human commits
+  and pushes, and you remind them to do so.
 ```
 
 ## Short form (for AIs with repo access)

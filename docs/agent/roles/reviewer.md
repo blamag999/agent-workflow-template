@@ -36,5 +36,5 @@ Fix: ...
 - [ ] Every finding has severity, location, suggested fix
 - [ ] Verdict stated once, clearly
 - [ ] Log entry appended, Section A and front-matter updated
-- [ ] Committed `[<ID>][reviewer] ...`
+- [ ] Committed `[<ID>][reviewer] ...` AND pushed to origin; working tree clean
 - [ ] NEXT PROMPT saved in Section A AND output in chat (full + short)
