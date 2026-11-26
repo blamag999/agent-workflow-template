@@ -3,7 +3,8 @@
 
 import json
 import sys
-from datetime import datetime, timezone
+import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 DEFAULT_CONFIG = {
@@ -219,6 +220,82 @@ def scan_recent_sessions(cfg: dict, limit: int = 10) -> list[dict]:
     return sessions
 
 
+_WINDOW_USAGE_CACHE: dict = {"ts": 0.0, "data": None}
+
+
+def _parse_iso_utc(value: str, fallback_ts: float) -> datetime:
+    if value:
+        try:
+            dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.astimezone(timezone.utc)
+        except Exception:
+            pass
+    return datetime.fromtimestamp(fallback_ts, tz=timezone.utc)
+
+
+def compute_window_usage(brain_dir: Path | None = None, force: bool = False) -> dict:
+    """Compute rolling 5h and 7d token usage across local transcripts (10s TTL cache)."""
+    now_mono = time.monotonic()
+    if not force and brain_dir is None and _WINDOW_USAGE_CACHE["data"] is not None:
+        if now_mono - _WINDOW_USAGE_CACHE["ts"] < 10.0:
+            return _WINDOW_USAGE_CACHE["data"]
+
+    root = brain_dir or (Path.home() / ".gemini" / "antigravity" / "brain")
+    now = datetime.now(timezone.utc)
+    cutoff_5h = now - timedelta(hours=5)
+    cutoff_7d = now - timedelta(days=7)
+    cutoff_7d_ts = cutoff_7d.timestamp()
+
+    w5_tokens = 0
+    w5_turns = 0
+    w7_tokens = 0
+    w7_turns = 0
+
+    if root.is_dir():
+        for tpath in root.glob("*/.system_generated/logs/transcript.jsonl"):
+            try:
+                mtime = tpath.stat().st_mtime
+                if mtime < cutoff_7d_ts:
+                    continue
+                with tpath.open("r", encoding="utf-8", errors="replace") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            entry = json.loads(line)
+                        except json.JSONDecodeError:
+                            continue
+                        if entry.get("type") != "PLANNER_RESPONSE":
+                            continue
+                        ts = _parse_iso_utc(entry.get("created_at", ""), mtime)
+                        if ts < cutoff_7d:
+                            continue
+                        tok = (
+                            int(entry.get("input_tokens") or 0)
+                            + int(entry.get("cache_read_tokens") or 0)
+                            + int(entry.get("output_tokens") or 0)
+                        )
+                        w7_tokens += tok
+                        w7_turns += 1
+                        if ts >= cutoff_5h:
+                            w5_tokens += tok
+                            w5_turns += 1
+            except Exception:
+                continue
+
+    result = {
+        "window_5h": {"tokens": w5_tokens, "turns": w5_turns},
+        "window_7d": {"tokens": w7_tokens, "turns": w7_turns},
+    }
+    if brain_dir is None:
+        _WINDOW_USAGE_CACHE["ts"] = now_mono
+        _WINDOW_USAGE_CACHE["data"] = result
+    return result
+
+
 def get_live_snapshot(plugin_dir: Path, conversation_id: str = "") -> dict:
     """Return live stats for requested or most-recently-active session plus recent sessions."""
     cfg = load_config(plugin_dir)
@@ -268,6 +345,7 @@ def get_live_snapshot(plugin_dir: Path, conversation_id: str = "") -> dict:
         "active": active,
         "config": cfg,
         "recent_sessions": recent,
+        "usage_windows": compute_window_usage(),
     }
 
 
