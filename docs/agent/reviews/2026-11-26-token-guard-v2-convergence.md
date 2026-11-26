@@ -52,3 +52,21 @@
 - **Coder:** implement in-scope patch only, run T1–T5 and provide verification evidence including host limitations.
 - **Independent Reviewer:** verify patch against this decision and T1–T5, especially cache semantics and no forced handoff; report APPROVE / REQUEST CHANGES.
 - **Release:** follow explicit authorization. **HOLD MERGE into main** until implementation review and approval.
+
+---
+
+## 5. Scope Amendment — Unified TG-21 Plugin + Web Userscript (User Approved, 2026-11-26)
+
+**Supersedes TG07 / earlier “Web out of scope” and “no Web-browser smoke” statements in this document for implementation planning.** Preserve prior counter-review history as a record of the former narrower agreement. The user explicitly requests doing both components in **one implementation pass, one task, one review cycle**.
+
+- **One task:** TG-21 covers both the Antigravity Token Guard v2.1 Lite plugin patch (TG01–TG06) **and** the ChatGPT/Claude Web userscript patch (TG07).
+- **Separate adapters / tests, shared delivery:** Do not conflate Antigravity provider transcript usage with Web DOM-visible-text estimates, and do not make browser DOM maintenance a prerequisite for running the Antigravity plugin itself. Both components must pass their applicable gates before the *combined TG-21 task* can close; an unavailable live browser must be marked NOT RUN and handled explicitly at review, never silently treated as PASS.
+- **Web in scope:** `extras/web-token-guard.user.js`; retain Tampermonkey userscript with existing match/update/download URLs. Add distinct message extraction adapters for ChatGPT and Claude, deduplicate overlapping selectors, remove full-`main.innerText` fallback (show unavailable/partial instead), label the count as **estimated visible-text tokens**, explicitly mark attachments/hidden/model context as **not counted**, handle SPA conversation navigation, avoid overwriting an existing draft, and provide reliable input/clipboard feedback. Keep all processing local and avoid outbound transmission.
+- **Web behavior:** No automatic conversation creation, no automated context summary, no unconfirmed editor changes. Preserve existing simple controls; avoid new backend, paid tokenizer/API and invasive DOM interception. Do not claim character/3.8 as accurate provider usage.
+- **Web acceptance matrix (additional mandatory checks):**
+  - **T6 — DOM adapters / dedup:** ChatGPT and Claude representative fixture DOM, selector fallback and overlapping nodes; count visible conversation content once, exclude navigation and own overlay, give an explicit unavailable state when no reliable messages are found.
+  - **T7 — SPA / performance:** Conversation changes and streaming DOM mutations refresh count for the new conversation; debounce updates; observer does not enter a self-triggering loop.
+  - **T8 — Editor / privacy:** On both editors, pre-existing draft stays intact; insertion only with safe explicit user action and correct editor input events or copy-to-clipboard fallback; no outbound user content and accurate “copied” feedback only on success.
+  - **T9 — Live browser smoke:** Test install/load, reading, navigation and prompt-copy/insert on real current ChatGPT Web and Claude Web **where access exists**. Record browser/version/date, result and limitations. If inaccessible, mark NOT RUN and treat live compatibility as **unverified**, requesting a focused manual UAT before calling cross-site compatibility confirmed.
+- **Scope exclusions unchanged:** No Lean v2 workflow changes, no new backend/dashboard, no actual context-window or account-quota measurements, no required token benchmark, no merge/deploy.
+- **Handoff:** Planner to issue one TG-21 Task Card covering **T1–T9**; Coder implements both in the same bounded task; Reviewer independently checks both. **HOLD MERGE into main.**
