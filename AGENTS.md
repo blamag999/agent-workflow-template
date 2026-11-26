@@ -28,27 +28,24 @@ You are given ONE role per session. If the role is unclear, ask the human before
 
 1. This file.
 2. `docs/agent/roles/<your-role>.md`.
-3. The work file: front-matter, Section A, and the LAST entry of Section B.
+3. The work file: front-matter, Section A (top), and the LAST entry of Section B (tail only for long files).
 4. Files listed under "Read next" (max 5, as `path:line`).
 
 Do not scan the whole repo. Use `docs/agent/MAP.md` to locate things.
-Review with the diff first: `git diff <base_sha>..<head_sha>`.
+Review with the diff first: `git diff --stat <base_sha>..HEAD`, then diff only relevant paths.
 
 ## Session end (a session is NOT done until all steps are complete)
 
 1. Append ONE new entry to Section B of the work file (never edit old entries).
-2. Overwrite Section A (current state, open items, Read next, NEXT PROMPT) and the front-matter
-   (`phase`, `next_role`, `round`, `head_sha`).
+2. Overwrite Section A (`Next task` — max 25 lines total) and the front-matter (`phase`, `next_role`, `round`).
 3. Commit on the work branch with prefix `[<ID>][<role>] message`, then PUSH to `origin`.
-   Verify: `git status` is clean and `git log origin/<branch> -1` equals your `head_sha`.
+   Verify: `git status` is clean and `git rev-parse HEAD` equals `git rev-parse origin/<branch>`.
    Do this BEFORE outputting the NEXT PROMPT, so the next role finds everything on the repo.
-4. Output the NEXT PROMPT for the next role, in BOTH forms, in the chat answer:
-   - full prompt (self-contained, for chat-only AIs)
-   - short prompt (one line pointing to the work file, for AIs with repo access)
-   The same text must be saved in Section A under `NEXT PROMPT`. If they differ, the file wins.
-   Template: `docs/agent/templates/next-prompt.md`.
+4. Output the NEXT PROMPT in the chat answer ONLY (do not duplicate it inside Section A):
+   - **Code mode**: output ONLY the 1-line Short prompt.
+   - **Chat mode**: output ONLY the slim Full prompt (template: `docs/agent/templates/next-prompt.md`).
 5. Final chat answer has 3 parts, in this order: Result (2-4 lines, Vietnamese),
-   Handoff to <role> with a short reason, then the two prompt code blocks.
+   Handoff to `<role>` with a short reason, then the single prompt code block.
 
 ## Mode
 
@@ -76,6 +73,15 @@ If blocked, hand back to the Planner with one concrete question. Do not guess.
 - Section A stays under 25 lines.
 - Max 3 review rounds, then the Planner decides.
 - Long session: write a checkpoint entry in Section B before stopping.
+
+## Execution token hygiene
+
+- **Diffs & reads**: Run `git diff --stat` first; exclude lockfiles, generated files, and large bundles (e.g., `*.lock`, `panel.html`, `dist/`). Use `rg` to locate symbols and read targeted line ranges instead of whole large files.
+- **Batching**: Issue independent reads/searches/edits in parallel; chain dependent shell checks into one command.
+- **Tiered verification**:
+  - *Tier 1 (Targeted — default)*: Run only tests for changed files/modules + local lint/typecheck using compact flags (`-q --tb=short`, `--reporter=dot`). Keep ≤50 tail lines on failure; on pass log `PASS (N tests)` only. Run after final edit; never re-run passing tests without new code changes.
+  - *Tier 2 (Impacted)*: Expand to direct callers / feature integration tests when touching shared layers (`utils/`, `core/`, `types/`, `config/`, middleware, API contracts) or >1 module.
+  - *Tier 3 (Full gate)*: Run the full suite + repo build/typecheck ONLY at gates: (a) once before `APPROVE`/merge on final `HEAD` (skip if CI already passed on `HEAD` or Coder already passed on the exact same `HEAD` with a sound test diff), (b) high-risk changes (DB schema/migrations, auth/security, dependency/lockfile upgrades, build/CI config), (c) milestone/release boundaries, or (d) when Planner marks `Verify (gate)` as required.
 
 ## Templates
 

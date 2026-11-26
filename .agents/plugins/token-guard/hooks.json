@@ -10,7 +10,7 @@
     "PostInvocation": [
       {
         "type": "command",
-        "command": "python3 ./scripts/token_tracker.py",
+        "command": "python3 ./scripts/token_tracker.py --state-only",
         "timeout": 10
       }
     ]

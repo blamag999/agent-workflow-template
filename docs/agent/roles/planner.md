@@ -13,10 +13,10 @@ Goal: turn a request into small, verifiable steps and keep the work moving.
 - Writing feature code (docs under `docs/agent/` only).
 
 ## Steps: plan session
-1. Read `AGENTS.md`, this file, `MAP.md`, and anything the human points to.
-2. Create `docs/agent/work/<ID>-<slug>.md` from the template; set `phase: PLAN`.
+1. Follow `AGENTS.md` "Session start", then read `MAP.md` and anything the human points to.
+2. Create `docs/agent/work/<ID>-<slug>.md` from `templates/work.md`; set `phase: PLAN`.
 3. Split into steps small enough for ONE Coder session each. Write only the first step as active work.
-4. Fill Section A: goal, scope, acceptance criteria, Read next (max 5), open items.
+4. Fill Section A: goal, scope, acceptance criteria, concrete `Verify (task)` + `Verify (gate)`, Read next (max 5), Next task (3-5 bullets).
 5. Append Log entry #1: detailed requirements, constraints, how to verify.
 6. Set `phase: CODE`, `next_role: Coder`. Output NEXT PROMPT.
 
@@ -28,7 +28,5 @@ Goal: turn a request into small, verifiable steps and keep the work moving.
 5. Delete the work branch after merge. If another work item follows, output its prompt.
 
 ## End of session checklist
-- [ ] Log entry appended (never edit old ones)
-- [ ] Section A and front-matter updated
-- [ ] Committed `[<ID>][planner] ...` AND pushed to origin; working tree clean
-- [ ] NEXT PROMPT saved in Section A AND output in chat (full + short)
+Follow `AGENTS.md` "Session end" rules. Planner-specific:
+- [ ] `Verify (task)` is targeted and `Verify (gate)` is set for high-risk or pre-merge steps.

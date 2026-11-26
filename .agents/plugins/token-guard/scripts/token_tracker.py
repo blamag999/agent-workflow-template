@@ -177,10 +177,11 @@ def load_state(plugin_dir: Path) -> dict:
             data = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(data, dict):
                 data.setdefault("auto_handoff_marks", {})
+                data.setdefault("warn_compact_marks", {})
                 return data
         except Exception:
             pass
-    return {"active": None, "auto_handoff_marks": {}}
+    return {"active": None, "auto_handoff_marks": {}, "warn_compact_marks": {}}
 
 
 def save_state(plugin_dir: Path, state: dict) -> None:
@@ -306,50 +307,64 @@ def build_hook_message(stats: dict, cfg: dict, conv_id: str, state: dict, plugin
     debounce_delta = int(cfg.get("debounce_delta", 30000))
 
     status = build_status_line(stats, cfg)
+    auto_marks = state.setdefault("auto_handoff_marks", {})
+    warn_marks = state.setdefault("warn_compact_marks", {})
+    state_changed = False
 
     if ctx < warn:
+        if conv_id in auto_marks:
+            del auto_marks[conv_id]
+            state_changed = True
+        if stats.get("is_spike"):
+            last_warn = warn_marks.get(conv_id)
+            if last_warn is None or (ctx - int(last_warn) >= debounce_delta):
+                warn_marks[conv_id] = ctx
+                save_state(plugin_dir, state)
+                delta = stats.get("delta_tokens", 0)
+                return (
+                    f"[TOKEN_GUARD] Spike +{delta:,} tokens. Suggest `/compact` once if continuing, "
+                    f"and append status bar at end (after ---):\n{status}"
+                )
+        else:
+            if conv_id in warn_marks:
+                del warn_marks[conv_id]
+                state_changed = True
+        if state_changed:
+            save_state(plugin_dir, state)
         if not show_every:
             return None
-        return (
-            "[TOKEN_GUARD] Bắt buộc hiển thị nguyên văn 1 dòng status bar mới nhất này "
-            "ở cuối cùng câu trả lời gửi người dùng (ngăn cách phía trên bằng `---`):\n"
-            f"{status}"
-        )
+        return f"[TOKEN_GUARD] Append status bar at end (after ---):\n{status}"
 
     if ctx < crit:
-        return (
-            "[TOKEN_GUARD] Bắt buộc hiển thị nguyên văn 1 dòng status bar mới nhất này "
-            "ở cuối cùng câu trả lời gửi người dùng (ngăn cách phía trên bằng `---`):\n"
-            f"{status}"
-        )
+        last_warn = warn_marks.get(conv_id)
+        if last_warn is None or (ctx - int(last_warn) >= debounce_delta):
+            warn_marks[conv_id] = ctx
+            save_state(plugin_dir, state)
+            return f"[TOKEN_GUARD] Append status bar at end (after ---):\n{status}"
+        if not show_every:
+            return None
+        return f"[TOKEN_GUARD] Append status bar at end (after ---):\n{status}"
 
     # Red threshold (>= crit)
-    marks = state.setdefault("auto_handoff_marks", {})
-    last_mark = marks.get(conv_id)
+    last_mark = auto_marks.get(conv_id)
     should_auto = (last_mark is None) or (ctx - int(last_mark) >= debounce_delta)
 
     if mode in ("auto_handoff", "auto_handoff_and_new_chat") and should_auto:
-        marks[conv_id] = ctx
+        auto_marks[conv_id] = ctx
         save_state(plugin_dir, state)
         extra = (
-            "Đồng thời tạo sẵn 1 phiên hội thoại mới sạch token qua `ConversationService/CreateConversation` "
-            "và trả về link `[Tiếp tục ở phiên mới](conversation://<id>)`."
+            "Then create a clean session via `ConversationService/CreateConversation` "
+            "and return `[Tiếp tục ở phiên mới](conversation://<id>)`."
             if mode == "auto_handoff_and_new_chat"
-            else "Sau đó nhắc người dùng gõ `/compact` hoặc mở phiên mới."
+            else "Then remind user to run `/compact` or open a new session."
         )
         return (
-            f"[TOKEN_GUARD_AUTO_HANDOFF] Ngữ cảnh đã vượt ngưỡng đỏ ({ctx:,} / {crit:,}). "
-            f"Hãy tự động thực hiện skill `token-guard` để lưu file handoff (< 1,200 tokens) ngay cuối lượt này. {extra}\n"
-            "[TOKEN_GUARD] Bắt buộc hiển thị nguyên văn 1 dòng status bar mới nhất này "
-            "ở cuối cùng câu trả lời gửi người dùng (ngăn cách phía trên bằng `---`):\n"
-            f"{status}"
+            f"[TOKEN_GUARD_AUTO_HANDOFF] Context exceeded red threshold ({ctx:,} / {crit:,}). "
+            f"Run `token-guard` skill to save handoff (< 1,200 tokens) now. {extra}\n"
+            f"[TOKEN_GUARD] Append status bar at end (after ---):\n{status}"
         )
 
-    return (
-        "[TOKEN_GUARD] Bắt buộc hiển thị nguyên văn 1 dòng status bar mới nhất này "
-        "ở cuối cùng câu trả lời gửi người dùng (ngăn cách phía trên bằng `---`):\n"
-        f"{status}"
-    )
+    return f"[TOKEN_GUARD] Append status bar at end (after ---):\n{status}"
 
 
 def main() -> None:
@@ -393,7 +408,7 @@ def main() -> None:
             }
             save_state(plugin_dir, state)
 
-        msg = build_hook_message(stats, cfg, conv_id, state, plugin_dir)
+        msg = None if "--state-only" in sys.argv[1:] else build_hook_message(stats, cfg, conv_id, state, plugin_dir)
         if not msg:
             print("{}")
             return

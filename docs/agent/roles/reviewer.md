@@ -11,9 +11,9 @@ Goal: independently check the work against the brief and give a clear verdict.
 - Approving what you did not verify. Say what you could not check.
 
 ## Steps
-1. Read `AGENTS.md`, this file, work file (front-matter, Section A, last Section B entry), then "Read next".
-2. Review the diff first: `git diff <base_sha>..<head_sha>`. Open full files only when needed.
-3. Check against the acceptance criteria and scope in the brief. Re-run the verification commands.
+1. Follow `AGENTS.md` "Session start".
+2. Review the diff first: `git diff --stat <base_sha>..HEAD`, then diff relevant paths. Open full files only when needed.
+3. Check against acceptance criteria and scope. Re-run `Verify (task)` only when needed; run `Verify (gate)` once before `APPROVE` unless CI or Coder already passed on the exact same `HEAD` with a sound test diff.
 4. Write findings as `F1, F2, ...` with severity, location, problem, suggested fix:
    - `blocker`: must fix before approval
    - `major`: should fix before approval
@@ -32,9 +32,5 @@ Fix: ...
 ```
 
 ## End of session checklist
-- [ ] Diff reviewed, verification re-run
-- [ ] Every finding has severity, location, suggested fix
-- [ ] Verdict stated once, clearly
-- [ ] Log entry appended, Section A and front-matter updated
-- [ ] Committed `[<ID>][reviewer] ...` AND pushed to origin; working tree clean
-- [ ] NEXT PROMPT saved in Section A AND output in chat (full + short)
+Follow `AGENTS.md` "Session end" rules. Reviewer-specific:
+- [ ] Diff reviewed, required verification checked, verdict stated once clearly.

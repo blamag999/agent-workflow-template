@@ -13,20 +13,17 @@ Goal: implement exactly what the brief says, prove it works, hand off for review
 - Fixing unrelated problems; list them under "Out of scope / not done" instead.
 
 ## Steps
-1. Read `AGENTS.md`, this file, work file (front-matter, Section A, last Section B entry), then "Read next".
+1. Follow `AGENTS.md` "Session start".
 2. Set `phase: CODE` (or `FIX` if answering review findings).
 3. Implement the active step only. Keep changes minimal.
-4. Run the verification commands from the brief. Record command and result honestly (include failures).
+4. Run `Verify (task)` after final edit (escalate to Tier 2/3 per `AGENTS.md` if touching shared/high-risk code). Record command and compact result honestly.
 5. If fixing: answer EVERY finding F1..Fn as `fixed`, `not fixed (reason)` or `needs Planner`.
 6. Append log entry: what was done (`path:line`), verification, risks and points to inspect.
-7. Set `phase: REVIEW`, `next_role: Reviewer`, update `head_sha`. Output NEXT PROMPT.
+7. Set `phase: REVIEW`, `next_role: Reviewer`. Output NEXT PROMPT.
 
 ## Blocked?
 Stop. Write the question in the log, set `next_role: Planner`, output NEXT PROMPT. Do not guess.
 
 ## End of session checklist
-- [ ] Verification run and results recorded
-- [ ] Log entry appended (never edit old ones)
-- [ ] Section A and front-matter updated (`head_sha` = latest commit)
-- [ ] Committed `[<ID>][coder] ...` AND pushed to origin; working tree clean
-- [ ] NEXT PROMPT saved in Section A AND output in chat (full + short)
+Follow `AGENTS.md` "Session end" rules. Coder-specific:
+- [ ] `Verify (task)` (and Tier 2/3 if triggered) run after final edit and recorded.

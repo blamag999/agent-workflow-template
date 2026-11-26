@@ -51,12 +51,13 @@ Chỉ giữ thông tin thực sự cần để tiếp tục công việc, bỏ l
 ```
 
 ### Bước 2: Lưu file snapshot
-- **Nếu có workspace dự án:** lưu vào `<workspace>/.agents/context/handoff-latest.md`.
+- **Nếu đang ở nhánh `work/*` và có file `docs/agent/work/<ID>-<slug>.md` đang hoạt động:** ghi checkpoint vào Section B và cập nhật Section A của chính file work đó (commit & push nếu ở Code mode) thay vì tách ra file handoff riêng.
+- **Nếu có workspace dự án (không thuộc nhánh `work/*`):** lưu vào `<workspace>/.agents/context/handoff-latest.md`.
 - **Nếu không có workspace:** lưu thành artifact `context-handoff.md`.
 
 ### Bước 3: Tự động mở phiên mới (`auto_handoff_and_new_chat`) hoặc hướng dẫn giảm token
 - **Khi `[TOKEN_GUARD_AUTO_HANDOFF]` yêu cầu tạo phiên mới** (hoặc người dùng chọn *"Lưu ngữ cảnh và mở phiên mới sạch token"*):
-  Gọi `ConversationService/CreateConversation` qua HTTP+JSON:
+  Gọi `ConversationService/CreateConversation` qua HTTP+JSON (trỏ prompt tới file work `docs/agent/work/<ID>-<slug>.md` nếu đang ở nhánh `work/*`, hoặc tới `<đường_dẫn_handoff>`):
   ```bash
   curl -sS -X POST \
     "http://$ANTIGRAVITY_LS_ADDRESS/product.v1.ConversationService/CreateConversation" \

@@ -1,2 +1,4 @@
-﻿
-.agents/plugins/token-guard/.state/
+﻿.agents/plugins/token-guard/.state/
+.agents/context/
+__pycache__/
+*.pyc
