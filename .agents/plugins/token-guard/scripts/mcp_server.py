@@ -59,7 +59,7 @@ def handle_request(req: dict) -> None:
             {
                 "protocolVersion": client_proto,
                 "capabilities": {"tools": {}, "resources": {}},
-                "serverInfo": {"name": "token-guard", "version": "2.0.0"},
+                "serverInfo": {"name": "token-guard", "version": "2.1.0"},
             },
         )
         return
@@ -175,7 +175,7 @@ def handle_request(req: dict) -> None:
                     "content": [
                         {
                             "type": "text",
-                            "text": f"Token Guard: {ctx:,} / {crit:,} tokens (turns: {stats.get('turns', 0)}).",
+                            "text": f"Token Guard (local): {ctx:,} / ngưỡng {crit:,} tokens (turns: {stats.get('turns', 0)}).",
                         }
                     ],
                     "structuredContent": payload,

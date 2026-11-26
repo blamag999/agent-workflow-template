@@ -1,8 +1,8 @@
 {
   "name": "token-guard",
   "displayName": "Token Guard",
-  "version": "2.0.0",
-  "description": "Theo dõi token realtime trên Side Pane & Sidebar trái, cảnh báo khi vượt ngưỡng, tự động lưu ngữ cảnh & mở phiên mới (auto_handoff_and_new_chat), kèm Userscript cho ChatGPT/Claude Web.",
+  "version": "2.1.0",
+  "description": "Theo dõi token local realtime trên Side Pane & Sidebar trái, cảnh báo theo ngưỡng cấu hình (mặc định suggest, auto handoff tùy chọn), kèm Userscript copy-only cho ChatGPT/Claude Web.",
   "suggestedPrompts": [
     "Mở Token Guard ở Side Pane để theo dõi token realtime",
     "Lưu ngữ cảnh hiện tại vào file handoff để giảm token",
