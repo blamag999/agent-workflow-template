@@ -48,7 +48,7 @@
 ## 5. Event-based Checkpoint (Tùy chọn cho Scale-up)
 - `CHECKPOINT.md` là **cache tiện lợi** (không phải nguồn sự thật; Git `HEAD`/`git log`, `work/<ID>-<slug>.md` và `MAP.md` luôn là SSOT). Không bắt buộc lưu định kỳ `checkpoints/YYYY-MM-DD.md`; `scripts/checkpoint.mjs` là tùy chọn.
 - **Quyền sở hữu & nhánh (B4):** `CHECKPOINT.md` do **Planner sở hữu** và **chỉ cập nhật trên nhánh tích hợp sau khi merge** (hoặc mốc kiến trúc lớn trên nhánh tích hợp). **Cấm sửa `CHECKPOINT.md` trên nhánh `work/<ID>`** để tránh xung đột khi chạy song song. Nếu nhánh tích hợp bật branch protection, Planner cập nhật qua commit/PR bình thường sau merge (không bypass protection).
-- **An toàn provenance & fallback (F01):** `CHECKPOINT.md` phải ghi `checkpoint_sha`, `branch`, `generated_at`. Khi `checkpoint_sha ≠ HEAD`, kiểm tra quan hệ tổ tiên bằng `git merge-base --is-ancestor <checkpoint_sha> HEAD`:
+- **An toàn provenance & fallback (F01):** `CHECKPOINT.md` phải ghi `checkpoint_sha` (commit SHA trên nhánh tích hợp mà checkpoint phản ánh, phân biệt với `HEAD` đang dở trên nhánh `work/<ID>`), `branch`, `generated_at`. Khi `checkpoint_sha ≠ HEAD`, kiểm tra quan hệ tổ tiên bằng `git merge-base --is-ancestor <checkpoint_sha> HEAD`:
   - Nếu là ancestor: dùng `git log --oneline <checkpoint_sha>..HEAD` và `git diff --stat <checkpoint_sha>..HEAD` làm dẫn đường.
   - Nếu rẽ nhánh/rebase/thiếu commit: **fallback** về `MAP.md` + active work file + kiểm tra có phạm vi; không coi diff sai lệch là đáng tin.
 

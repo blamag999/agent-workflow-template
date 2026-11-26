@@ -20,7 +20,7 @@ round: 0/3
 - [ ] <measurable>
 
 **Verify (task):** `<targeted command>` -> expected `<result>`
-**Verify (gate):** `<full command or "CI / none">` (high-risk T3 requires trustworthy CI PASS or independent Reviewer run)
+**Verify (gate):** `<full command or "none">` (risk-based T3 only; high-risk T3 requires trustworthy CI PASS or independent Reviewer run)
 
 **Next task (3-5 bullets):**
 - [ ] <F1 [blocker] ... or next concrete step>

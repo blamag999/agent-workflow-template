@@ -29,7 +29,7 @@ Luồng: `1. Khảo sát → 2. Chọn phương án & hồ sơ → 3. Cài khung
 - Gom commit trên nhánh tích hợp (hoặc PR theo branch protection), push và kiểm tra `HEAD == origin`.
 
 ## 5. Vận hành & Bảo trì
-- **Luồng vận hành:** `Planner (work file) → Coder (code + T1/T2, ghi chứng cứ 5 trường) → Reviewer độc lập (đọc progressive, kiểm chứng cứ & verdict) → Planner (merge khi APPROVE, đóng task)`.
+- **Luồng vận hành:** `Planner (work file) → Coder (code + T1/T2, ghi chứng cứ 5 trường) → Reviewer độc lập (đọc progressive, kiểm chứng cứ & verdict) → Planner (CLOSE: commit/push nhánh work → merge → archive & cập nhật trên nhánh tích hợp → cleanup xóa nhánh)`.
   - *Ngoại lệ Planner tự đóng:* chỉ áp dụng cho việc sửa doc/typo/index thuần túy (0 tác động code, test, config, hoặc workflow policy), ghi lý do 1 dòng trong Section B.
 - **Work file SSOT (`docs/agent/work/<ID>-<slug>.md`):** giữ cấu trúc `front-matter / Section A (≤25 dòng) / Section B (append-only, mỗi entry mới ≤15 dòng và ≤150 từ)`. Đầu phiên đọc có chọn lọc: `front-matter + Section A + entry Section B cuối cùng`. `NEXT PROMPT` chỉ xuất trong chat.
 - **Tái dùng chứng cứ test (5 trường: `sha`, `command`, `result`, `tier`, `env_note`):**

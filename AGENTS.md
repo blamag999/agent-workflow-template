@@ -37,7 +37,7 @@ Adopt **Core** (`AGENTS.md`, `MAP.md`, `work/<ID>-<slug>.md`) or **Scale-up** (a
 
 ## Session start (progressive context — read in order, expand when needed)
 
-1. `docs/agent/CHECKPOINT.md` **if it exists** (convenience cache only). If `checkpoint_sha` ≠ `HEAD`, verify ancestry first with `git merge-base --is-ancestor <checkpoint_sha> HEAD`:
+1. `docs/agent/CHECKPOINT.md` **if it exists** (convenience cache only; `checkpoint_sha` is the integration-branch commit SHA summarized by the checkpoint, distinct from an in-progress work-branch `HEAD`). If `checkpoint_sha` ≠ `HEAD`, verify ancestry first with `git merge-base --is-ancestor <checkpoint_sha> HEAD`:
    - If ancestor: run `git log --oneline <checkpoint_sha>..HEAD` + `git diff --stat <checkpoint_sha>..HEAD`.
    - If divergent or commit missing: fall back to `docs/agent/MAP.md` + active work file; never treat a misleading diff as authoritative.
 2. This file.
@@ -95,7 +95,7 @@ If blocked, hand back to the Planner with one concrete question. Do not guess.
 - **Tiered verification (risk-based `T1/T2/T3`)**:
   - *Tier 1 (Targeted — default)*: Run only tests for changed files/modules + local lint/typecheck using compact flags (`-q --tb=short`, `--reporter=dot`). Keep ≤50 tail lines on failure; on pass log `PASS (N tests)` only. Run after final edit; never re-run passing tests without new code changes.
   - *Tier 2 (Impacted)*: Expand to direct callers / feature integration tests when touching shared layers (`utils/`, `core/`, `types/`, `config/`, middleware, API contracts) or >1 module.
-  - *Tier 3 (Full gate)*: Run the full suite + repo build/typecheck ONLY at gates: (a) once before `APPROVE`/merge on final `HEAD`, (b) high-risk changes (DB schema/migrations, auth/security, dependency/lockfile upgrades, build/CI config), (c) milestone/release boundaries, or (d) when Planner marks `Verify (gate)` as required.
+  - *Tier 3 (Full gate — risk-based only)*: Run the full suite + repo build/typecheck ONLY when a gate applies: (a) high-risk changes (DB schema/migrations, auth/security, dependency/lockfile upgrades, build/CI config), (b) milestone/release boundaries, (c) repo merge policy requires a full gate, or (d) Planner explicitly sets `Verify (gate)` as required. Low-risk tasks with no T3 gate stay on T1/T2.
 - **Test evidence & reuse**:
   - Record verification in Section B using 5 fields (1–2 lines): `sha` (tested code/config/test revision), `command`, `result`, `tier` (`T1|T2|T3`), `env_note` (`local`, `CI <url>`, or non-default env/DB).
   - Coder `local` PASS on exact `sha` may be reused for **T1 / T2**. High-risk **T3** gates require a **trustworthy CI PASS** (verifying required env/external conditions) OR an **independent Reviewer run**.

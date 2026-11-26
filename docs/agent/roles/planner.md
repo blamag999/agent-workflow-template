@@ -23,11 +23,10 @@ Goal: turn a request into small, verifiable steps and keep the work moving.
 6. Set `phase: CODE`, `next_role: Coder`. Output NEXT PROMPT.
 
 ## Steps: close session (after Reviewer APPROVE, or bounded self-close)
-1. Check every acceptance criterion against the last review (or record the 1-line rationale for a pure doc/typo/index self-close).
-2. Merge the work branch into the integration branch (code mode) or tell the human the exact merge steps (chat mode), respecting repository authorization gates.
-3. On the integration branch after merge (via follow-up commit/PR if branch protection applies): add ONE line to `docs/agent/INDEX.md` (if used), update `MAP.md` if structure changed, and update optional `docs/agent/CHECKPOINT.md` with `checkpoint_sha`, `branch`, `generated_at`.
-4. Move the work file to `docs/agent/archive/`; set `phase: DONE`, `next_role: none`.
-5. Delete the work branch after merge. If another work item follows, output its prompt.
+1. **Close on work branch:** Check every acceptance criterion against the last review (or record the 1-line rationale for a pure doc/typo/index self-close). Append the close entry in Section B, set `phase: DONE`, `next_role: none`, then **commit and push** the work branch (`HEAD == origin/<branch>`).
+2. **Merge:** Merge the work branch into the integration branch (code mode) or give the human the exact merge steps (chat mode), respecting repository authorization gates.
+3. **Archive & post-merge updates (integration branch):** Move the closed work file to `docs/agent/archive/`, add ONE line to `docs/agent/INDEX.md` (if used), update `MAP.md` if structure changed, and update optional `docs/agent/CHECKPOINT.md` with `checkpoint_sha` (the merged integration commit SHA summarized), `branch`, `generated_at`. Commit and push (via follow-up commit/PR if branch protection applies).
+4. **Cleanup:** Delete the merged work branch (local and remote). If another work item follows, output its prompt.
 
 ## End of session checklist
 Follow `AGENTS.md` "Session end" rules. Planner-specific:

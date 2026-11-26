@@ -15,7 +15,7 @@ Goal: independently check the work against the brief and give a clear verdict.
 2. Review the diff first: `git diff --stat <base_sha>..HEAD`, then diff relevant paths. Expand to callers, contracts, tests, and invariants whenever needed; never treat diff-only reading as completeness.
 3. Check against acceptance criteria, scope, and test-evidence provenance:
    - Coder `local` PASS on exact tested `sha` may be reused for **T1 / T2**.
-   - High-risk **T3** gates require a **trustworthy CI PASS** (verifying required env/external conditions) OR an **independent Reviewer run** of `Verify (gate)`.
+   - High-risk **T3** gates (when `Verify (gate)` or a T3 risk/release/policy trigger applies) require a **trustworthy CI PASS** (verifying required env/external conditions) OR an **independent Reviewer run** of `Verify (gate)`. Skip T3 for low-risk tasks with no T3 gate.
    - Doc-only Reviewer commits (touching only the work file) do not invalidate prior tested-revision `sha` evidence.
 4. Write findings as `F1, F2, ...` with severity, location, problem, suggested fix:
    - `blocker`: must fix before approval
