@@ -1,6 +1,6 @@
 # Đề xuất: Lean Agent Workflow v2 (Tối ưu Token & Trình bày Markdown)
 
-> **Status: REVISED (6/6 Reviewer Convergence — sẵn sàng pilot; HOLD MERGE vào `main`)**
+> **Status: APPROVED FOR PILOT (candidate `376fe82` — 6/6 Reviewer Convergence; HOLD MERGE vào `main`)**
 
 **TL;DR:** Chọn hồ sơ **Core / Scale-up** 1 lần khi cài repo · Work file SSOT (`front-matter / Section A ≤25 dòng / Section B` entry ≤15 dòng & ≤150 từ) · Đọc ngữ cảnh tăng tiến (*progressive context*) · Kiểm thử rủi ro `T1/T2/T3` + tái dùng chứng cứ 5 trường · `CHECKPOINT.md` tùy chọn, chỉ cập nhật trên nhánh tích hợp sau merge.
 
@@ -71,7 +71,9 @@
 | `archive/` | Lưu work file đã đóng | Chuyển vào khi `phase: DONE` |
 
 ## 8. Lộ trình pilot
-`1. Cập nhật AGENTS.md, ADOPT.md, PROPOSAL, roles/ & templates/ trên nhánh proposal/token-optimization → 2. Reviewer kiểm tra lần cuối → 3. Pilot 3–5 task thực tế trên my-learning-hub → 4. Tổng kết trước khi xét merge vào main`
+`1. Cập nhật AGENTS.md, ADOPT.md, PROPOSAL, roles/ & templates/ trên nhánh proposal/token-optimization (DONE) → 2. Reviewer kiểm tra lần cuối (APPROVE FOR PILOT @ 376fe82) → 3. Pilot 3–5 task thực tế trên my-learning-hub (NEXT) → 4. Tổng kết trước khi xét merge vào main (HOLD MERGE)`
+
+- **Reviewer sign-off (2026-11-26):** `APPROVE FOR PILOT` trên candidate `376fe82` — 6/6 Convergence Checklist đạt, 3 yêu cầu sửa cuối PASS, không còn blocker/major. Giữ `HOLD MERGE` vào `main` và không deploy cho đến khi hoàn tất đánh giá pilot.
 
 ## 9. Phản biện, Rủi ro & Tiêu chí đánh giá Pilot
 - **Checkpoint lệch thực tế (F01):** SHA lệch `HEAD` chỉ báo hiệu có delta, không đồng nghĩa hỏng; luôn chạy `git merge-base --is-ancestor` trước, nếu divergent thì fallback về `MAP.md` + work file.
