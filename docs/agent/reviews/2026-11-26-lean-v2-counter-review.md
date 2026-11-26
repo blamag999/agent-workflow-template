@@ -94,6 +94,19 @@ Please reply **AGREE / DISAGREE (+ alternative)** on these 6 points so we can fi
 5. Enforce **`CHECKPOINT.md` is integration-branch-only** (never edited on work branches) + F01 ancestry check (B4)?
 6. Allow **Planner self-close** *only* for pure non-functional doc/typo/index chores (zero code/config/test/policy impact)?
 
+## 7. Final Convergence (6/6 AGREE — 2026-11-26)
+
+- Counter-reviewer response to `docs/agent/reviews/2026-11-26-token-optimization-review.md` (Round 2 at `8db27a9`):
+- **Point #3 (Pilot metrics): AGREE.**
+  - Rationale: Requiring 3 mandatory proxy metrics or a hard `review_rounds ≤ 2` gate would add unnecessary tracking overhead and risk perverse incentives. Using `review_rounds` (derived opportunistically from tagged Reviewer commits) as the **sole optional lightweight indicator**—without hard thresholds, mandatory `workflow_files_edited` / `context_miss_rework` logging, or manual rituals—is leaner and preserves the core principle that workflow overhead must stay minimal.
+- **Consensus Status: 6/6 AGREE.** All 6 convergence items and B1–B5 are settled:
+  1. **Repo profile & verification:** Drop per-task S/M/L; use **Core vs Scale-up** once at repo onboarding + risk-based `T1/T2/T3`.
+  2. **Work file SSOT:** Keep `front-matter / Section A / Section B`; `Section A ≤25 lines`, `Section B` append-only with each new entry **≤15 lines and ≤150 words**; targeted tail-read (front-matter + Section A + latest Section B entry).
+  3. **Pilot evaluation:** Optional `review_rounds` indicator only (no hard gate, no 3-metric collection); optional passive token logs only if zero-overhead; judge on gate integrity, acceptance quality, and low friction; no numerical savings claims without comparable measured data.
+  4. **Evidence reuse:** Coder local PASS reusable for T1/T2; high-risk T3 requires trustworthy CI PASS or independent Reviewer run. Record 5 fields (`sha` of tested code/config/test revision, `command`, `result`, `tier`, `env_note`). Doc-only Reviewer commits do not invalidate prior tested-revision evidence.
+  5. **Event-based checkpoint (optional):** `CHECKPOINT.md` is Planner-owned, **integration-branch-only** (updated post-merge via commit/PR respecting branch protections; never edited on work branches). Include `checkpoint_sha`, `branch`, `generated_at`, ancestry check (`git merge-base --is-ancestor`), and fallback to `MAP.md` + active work file.
+  6. **Planner self-close exception:** Allowed *only* for purely non-functional doc/typo/index chores with zero code, test, config, or policy impact, with a 1-line rationale in the task log.
+
 ## Handoff
 
-**To Other Reviewer (Mắt — Round 2 Convergence):** Review §1–§6 of this document and respond to the 6 Convergence Checklist items above (AGREE / DISAGREE + concrete counter-proposal). Once both reviewers converge, hand to Planner (Não) to apply the agreed edits. **HOLD MERGE** into `main`.
+**To Planner (Não):** Both reviewers have reached **6/6 convergence** on Lean Agent Workflow v2. Apply the agreed edits to `AGENTS.md`, `docs/agent/ADOPT.md`, `docs/agent/PROPOSAL-token-optimization.md`, and affected templates (resolving F01/F03/F04 and F02 wording) on `proposal/token-optimization`, then request final independent review before pilot. **HOLD MERGE** into `main`.
