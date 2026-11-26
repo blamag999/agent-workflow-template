@@ -2,6 +2,7 @@
 """Antigravity PreInvocation + PostInvocation hook & live transcript analyzer for Token Guard."""
 
 import json
+import math
 import sys
 import time
 from datetime import datetime, timedelta, timezone
@@ -12,10 +13,51 @@ DEFAULT_CONFIG = {
     "critical_threshold": 120000,
     "spike_threshold": 15000,
     "show_every_turn": False,
-    "red_threshold_mode": "auto_handoff_and_new_chat",
+    "red_threshold_mode": "suggest",
     "debounce_delta": 30000,
     "poll_interval_ms": 2000,
 }
+
+_TRANSCRIPT_PARSE_CACHE: dict[tuple[str, int, int], dict] = {}
+_TRANSCRIPT_PARSE_CACHE_MAX = 128
+
+
+def clear_parse_cache() -> None:
+    """Clear the in-memory transcript parse cache."""
+    _TRANSCRIPT_PARSE_CACHE.clear()
+
+
+def _safe_non_neg_int(value) -> int:
+    """Convert raw transcript token field to a non-negative int safely."""
+    if value is None or isinstance(value, bool):
+        return 0
+    if isinstance(value, int):
+        return value if value > 0 else 0
+    if isinstance(value, float):
+        return int(value) if math.isfinite(value) and value > 0 else 0
+    if isinstance(value, str):
+        try:
+            parsed = int(value.strip())
+            return parsed if parsed > 0 else 0
+        except ValueError:
+            return 0
+    return 0
+
+
+def _extract_turn_usage(entry) -> tuple[int, int] | None:
+    """Extract (context_tokens, local_gross_tokens) for a PLANNER_RESPONSE entry.
+
+    Assumes input_tokens and cache_read_tokens are disjoint fields in supported
+    transcript records. Returns None for non-PLANNER_RESPONSE or malformed entries.
+    """
+    if not isinstance(entry, dict) or entry.get("type") != "PLANNER_RESPONSE":
+        return None
+    inp = _safe_non_neg_int(entry.get("input_tokens"))
+    cache = _safe_non_neg_int(entry.get("cache_read_tokens"))
+    out = _safe_non_neg_int(entry.get("output_tokens"))
+    context_tokens = inp + cache
+    gross_tokens = context_tokens + out
+    return context_tokens, gross_tokens
 
 
 def is_global_plugin_active_elsewhere(current_plugin_dir: Path) -> bool:
@@ -92,9 +134,12 @@ def _iso_mtime(path: Path) -> str:
 
 
 def parse_transcript(transcript_path: str, cfg: dict | None = None) -> dict:
-    """Parse transcript.jsonl and compute context, delta, spike, and turns-left metrics."""
+    """Parse transcript.jsonl and compute local context, signed delta, spike, and gross volume.
+
+    Results are cached in memory by (path, mtime_ns, size) to avoid re-reading
+    unchanged transcript files.
+    """
     cfg = cfg or DEFAULT_CONFIG
-    crit = int(cfg.get("critical_threshold", 120000))
     spike_thresh = int(cfg.get("spike_threshold", 15000))
 
     empty = {
@@ -102,8 +147,6 @@ def parse_transcript(transcript_path: str, cfg: dict | None = None) -> dict:
         "current_context": 0,
         "prev_context": 0,
         "delta_tokens": 0,
-        "avg_delta": 0,
-        "est_turns_left": None,
         "is_spike": False,
         "total_tokens": 0,
         "last_updated": "",
@@ -111,8 +154,19 @@ def parse_transcript(transcript_path: str, cfg: dict | None = None) -> dict:
     if not transcript_path:
         return empty
     path = Path(transcript_path)
+    try:
+        st = path.stat()
+    except OSError:
+        return empty
     if not path.is_file():
         return empty
+
+    cache_key = (str(path), st.st_mtime_ns, st.st_size)
+    cached = _TRANSCRIPT_PARSE_CACHE.get(cache_key)
+    if cached is not None:
+        result = dict(cached)
+        result["is_spike"] = result["delta_tokens"] >= spike_thresh
+        return result
 
     turns = 0
     total_tokens = 0
@@ -129,34 +183,34 @@ def parse_transcript(transcript_path: str, cfg: dict | None = None) -> dict:
             except json.JSONDecodeError:
                 continue
 
-            if entry.get("type") != "PLANNER_RESPONSE":
+            usage = _extract_turn_usage(entry)
+            if usage is None:
                 continue
-
-            inp = int(entry.get("input_tokens") or 0)
-            cache = int(entry.get("cache_read_tokens") or 0)
-            out = int(entry.get("output_tokens") or 0)
+            turn_ctx, turn_gross = usage
 
             turns += 1
             prev_context = last_context
-            last_context = inp + cache
-            total_tokens += inp + cache + out
+            last_context = turn_ctx
+            total_tokens += turn_gross
 
     delta_tokens = (last_context - prev_context) if turns >= 2 else last_context
-    avg_delta = round(last_context / turns) if turns > 0 else 0
-    remaining = max(0, crit - last_context)
-    est_turns_left = (remaining // avg_delta) if avg_delta > 0 else None
+    last_updated = datetime.fromtimestamp(st.st_mtime, tz=timezone.utc).astimezone().isoformat(timespec="seconds")
 
-    return {
+    base = {
         "turns": turns,
         "current_context": last_context,
         "prev_context": prev_context,
         "delta_tokens": delta_tokens,
-        "avg_delta": avg_delta,
-        "est_turns_left": est_turns_left,
-        "is_spike": delta_tokens >= spike_thresh,
         "total_tokens": total_tokens,
-        "last_updated": _iso_mtime(path),
+        "last_updated": last_updated,
     }
+    if len(_TRANSCRIPT_PARSE_CACHE) >= _TRANSCRIPT_PARSE_CACHE_MAX:
+        _TRANSCRIPT_PARSE_CACHE.clear()
+    _TRANSCRIPT_PARSE_CACHE[cache_key] = base
+
+    result = dict(base)
+    result["is_spike"] = delta_tokens >= spike_thresh
+    return result
 
 
 def make_bar(value: int, maximum: int, width: int = 12) -> str:
@@ -268,16 +322,13 @@ def compute_window_usage(brain_dir: Path | None = None, force: bool = False) -> 
                             entry = json.loads(line)
                         except json.JSONDecodeError:
                             continue
-                        if entry.get("type") != "PLANNER_RESPONSE":
+                        usage = _extract_turn_usage(entry)
+                        if usage is None:
                             continue
                         ts = _parse_iso_utc(entry.get("created_at", ""), mtime)
                         if ts < cutoff_7d:
                             continue
-                        tok = (
-                            int(entry.get("input_tokens") or 0)
-                            + int(entry.get("cache_read_tokens") or 0)
-                            + int(entry.get("output_tokens") or 0)
-                        )
+                        _, tok = usage
                         w7_tokens += tok
                         w7_turns += 1
                         if ts >= cutoff_5h:
@@ -350,7 +401,7 @@ def get_live_snapshot(plugin_dir: Path, conversation_id: str = "") -> dict:
 
 
 def build_status_line(stats: dict, cfg: dict) -> str:
-    """Build 1-line markdown status bar."""
+    """Build 1-line markdown status bar using truthful local usage & threshold labels."""
     ctx = stats["current_context"]
     total = stats["total_tokens"]
     turns = stats["turns"]
@@ -362,17 +413,17 @@ def build_status_line(stats: dict, cfg: dict) -> str:
 
     if ctx >= crit:
         return (
-            f"🔴 `[{bar}]` **Token: {ctx:,} / {crit:,}** ({pct}%) · Tổng phiên: **{total:,}** "
-            f"— **Vượt ngưỡng!** Gõ **\"Lưu ngữ cảnh\"** rồi `/compact`"
+            f"🔴 `[{bar}]` **Ngữ cảnh: {ctx:,} / ngưỡng {crit:,}** ({pct}% ngưỡng) · Tổng phiên (local): **{total:,}** "
+            f"— **Vượt ngưỡng cảnh báo!** Gõ **\"Lưu ngữ cảnh\"** hoặc `/compact`"
         )
     if ctx >= warn:
         return (
-            f"🟡 `[{bar}]` **Token: {ctx:,} / {crit:,}** ({pct}%) · Tổng phiên: **{total:,}** "
-            f"— Sắp đầy, nên **\"Lưu ngữ cảnh\"** hoặc `/compact`"
+            f"🟡 `[{bar}]` **Ngữ cảnh: {ctx:,} / ngưỡng {crit:,}** ({pct}% ngưỡng) · Tổng phiên (local): **{total:,}** "
+            f"— Sắp chạm ngưỡng, nên **\"Lưu ngữ cảnh\"** hoặc `/compact`"
         )
     if turns == 0:
-        return f"🟢 `[{bar}]` **Token: 0 / {crit:,}** (0%) · Tổng phiên: **0** *(Lượt đầu)*"
-    return f"🟢 `[{bar}]` **Token: {ctx:,} / {crit:,}** ({pct}%) · Tổng phiên: **{total:,}**"
+        return f"🟢 `[{bar}]` **Ngữ cảnh: 0 / ngưỡng {crit:,}** (0% ngưỡng) · Tổng phiên (local): **0** *(Lượt đầu)*"
+    return f"🟢 `[{bar}]` **Ngữ cảnh: {ctx:,} / ngưỡng {crit:,}** ({pct}% ngưỡng) · Tổng phiên (local): **{total:,}**"
 
 
 def build_hook_message(stats: dict, cfg: dict, conv_id: str, state: dict, plugin_dir: Path) -> str | None:
@@ -381,7 +432,7 @@ def build_hook_message(stats: dict, cfg: dict, conv_id: str, state: dict, plugin
     warn = int(cfg.get("warn_threshold", 80000))
     crit = int(cfg.get("critical_threshold", 120000))
     show_every = bool(cfg.get("show_every_turn", False))
-    mode = cfg.get("red_threshold_mode", "auto_handoff_and_new_chat")
+    mode = cfg.get("red_threshold_mode", "suggest")
     debounce_delta = int(cfg.get("debounce_delta", 30000))
 
     status = build_status_line(stats, cfg)
