@@ -279,10 +279,19 @@
     }, DEBOUNCE_MS);
   }
 
-  function isOverlayMutation(record) {
+  function isIgnoredMutation(record) {
     const target = record && record.target;
     if (!target) return false;
-    return target === root || (typeof root.contains === 'function' && root.contains(target));
+    if (target === root || (typeof root.contains === 'function' && root.contains(target))) {
+      return true;
+    }
+    const el = typeof target.closest === 'function' ? target : target.parentNode;
+    if (el && typeof el.closest === 'function') {
+      if (el.closest('#' + ROOT_ID + ', nav, aside, header, footer')) {
+        return true;
+      }
+    }
+    return false;
   }
 
   const obs = new MutationObserver((records) => {
@@ -291,15 +300,17 @@
       return;
     }
     if (document.hidden) return;
-    if (Array.isArray(records) && records.length > 0 && records.every(isOverlayMutation)) {
+    if (Array.isArray(records) && records.length > 0 && records.every(isIgnoredMutation)) {
       return;
     }
     scheduleRefresh();
   });
 
   function attachObserver() {
-    const target = document.querySelector('main') || document.body || document.documentElement;
-    if (!target || target === observedTarget) return;
+    const target = document.body || document.documentElement;
+    if (!target) return;
+    const connected = typeof target.isConnected === 'boolean' ? target.isConnected : true;
+    if (target === observedTarget && connected) return;
     obs.disconnect();
     obs.observe(target, { childList: true, subtree: true, characterData: true });
     observedTarget = target;

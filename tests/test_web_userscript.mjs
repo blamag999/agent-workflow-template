@@ -73,6 +73,24 @@ class FakeElement {
     return child;
   }
 
+  removeChild(child) {
+    const idx = this.children.indexOf(child);
+    if (idx !== -1) {
+      this.children.splice(idx, 1);
+      child.parentNode = null;
+    }
+    return child;
+  }
+
+  get isConnected() {
+    let cur = this;
+    while (cur) {
+      if (cur.tagName === 'HTML') return true;
+      cur = cur.parentNode;
+    }
+    return false;
+  }
+
   contains(other) {
     let cur = other;
     while (cur) {
@@ -337,6 +355,17 @@ function createHarness({ url = 'https://claude.ai/chat/c1', clipboard = undefine
     timers,
     getSetIntervalCalls: () => setIntervalCalls,
     runScript: () => vm.runInContext(USERSCRIPT_SRC, sandbox),
+    emitMutation: (records) => {
+      for (const obs of observers) {
+        if (obs.disconnected || !obs.target) continue;
+        const matched = records.filter(
+          (r) => r && r.target && (obs.target === r.target || obs.target.contains(r.target))
+        );
+        if (matched.length > 0) {
+          obs.trigger(matched);
+        }
+      }
+    },
     flushTimers: () => {
       const pending = timers.filter((t) => !t.cleared && !t.ran);
       for (const t of pending) {
@@ -457,6 +486,69 @@ test('T7: SPA route change, streaming debounce, overlay exclusion, hidden pause,
   main.appendChild(new FakeElement('div', { 'data-message-author-role': 'user' }, 'D'.repeat(380))); // 100 tok
   h.history.pushState({}, '', '/c/chat-2');
   assert.match(shadow.getElementById('cardTokens').textContent, /~100/);
+});
+
+test('T7 regression (F01): SPA replacing entire <main> after pushState/popstate keeps single observer active', () => {
+  const h = createHarness({ url: 'https://chatgpt.com/c/chat-1' });
+  const nav = new FakeElement('nav');
+  h.body.appendChild(nav);
+
+  const oldMain = new FakeElement('main');
+  oldMain.appendChild(new FakeElement('div', { 'data-message-author-role': 'user' }, 'A'.repeat(3800))); // 1000 tok
+  h.body.appendChild(oldMain);
+
+  h.runScript();
+  assert.equal(h.getSetIntervalCalls(), 0, 'must not use setInterval');
+  assert.equal(h.observers.length, 1, 'must keep single MutationObserver');
+
+  const shadow = h.document.getElementById('tg-web-root').shadowRoot;
+  assert.match(shadow.getElementById('cardTokens').textContent, /~1,000 \/ ngưỡng 120,000/);
+
+  // Non-conversation nav mutations inside body must be ignored (no debounce timer)
+  nav.appendChild(new FakeElement('div', {}, 'Sidebar update'));
+  h.emitMutation([{ target: nav }]);
+  assert.equal(h.timers.filter((t) => !t.cleared && !t.ran).length, 0, 'nav mutations must be ignored');
+
+  // 1) pushState fires BEFORE SPA replaces <main>
+  h.history.pushState({}, '', '/c/chat-2');
+  assert.equal(h.observers.length, 1, 'must not spawn extra observers on route change');
+
+  // SPA asynchronously detaches oldMain and mounts a brand-new <main>
+  h.body.removeChild(oldMain);
+  const newMain = new FakeElement('main');
+  h.body.appendChild(newMain);
+  h.emitMutation([{ target: h.body }]);
+
+  // SPA streams a new message into newMain
+  newMain.appendChild(new FakeElement('div', { 'data-message-author-role': 'assistant' }, 'B'.repeat(1900))); // 500 tok
+  h.emitMutation([{ target: newMain }]);
+
+  const pendingAfterPush = h.timers.filter((t) => !t.cleared && !t.ran);
+  assert.equal(pendingAfterPush.length, 1, 'single observer must receive mutation in replaced <main>');
+  assert.equal(pendingAfterPush[0].delay, 1500);
+  h.flushTimers();
+
+  assert.match(shadow.getElementById('cardTokens').textContent, /~500 \/ ngưỡng 120,000/);
+  assert.match(shadow.getElementById('cardMeta').textContent, /1 khối/);
+  assert.equal(oldMain.isConnected, false, 'oldMain must be detached');
+
+  // 2) popstate fires BEFORE SPA replaces <main> again
+  h.location.href = 'https://chatgpt.com/c/chat-3';
+  h.windowObj.dispatchEvent('popstate');
+
+  h.body.removeChild(newMain);
+  const thirdMain = new FakeElement('main');
+  h.body.appendChild(thirdMain);
+  thirdMain.appendChild(new FakeElement('div', { 'data-message-author-role': 'user' }, 'C'.repeat(950))); // 250 tok
+  h.emitMutation([{ target: thirdMain }]);
+
+  const pendingAfterPop = h.timers.filter((t) => !t.cleared && !t.ran);
+  assert.equal(pendingAfterPop.length, 1, 'observer must remain active after popstate + <main> replacement');
+  h.flushTimers();
+
+  assert.match(shadow.getElementById('cardTokens').textContent, /~250 \/ ngưỡng 120,000/);
+  assert.equal(h.observers.length, 1, 'still exactly 1 MutationObserver');
+  assert.equal(h.getSetIntervalCalls(), 0, 'still 0 setInterval calls');
 });
 
 test('T8: Copy-only clipboard resolve/reject/missing, draft immutability, privacy source check', async () => {
