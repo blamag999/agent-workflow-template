@@ -90,7 +90,7 @@ If blocked, hand back to the Planner with one concrete question. Do not guess.
 
 ## Execution token hygiene
 
-- **Diffs & reads**: Run `git diff --stat` first; exclude lockfiles, generated files, and large bundles (e.g., `*.lock`, `panel.html`, `dist/`). Search symbols before reading and inspect targeted line ranges instead of whole large files.
+- **Diffs & reads**: Run `git diff --stat` first; exclude lockfiles, generated files, and large bundles (e.g., `*.lock`, `dist/`). Search symbols before reading and inspect targeted line ranges instead of whole large files.
 - **Batching**: Issue independent reads/searches/edits in parallel; chain dependent shell checks into one command.
 - **Tiered verification (risk-based `T1/T2/T3`)**:
   - *Tier 1 (Targeted — default)*: Run only tests for changed files/modules + local lint/typecheck using compact flags (`-q --tb=short`, `--reporter=dot`). Keep ≤50 tail lines on failure; on pass log `PASS (N tests)` only. Run after final edit; never re-run passing tests without new code changes.

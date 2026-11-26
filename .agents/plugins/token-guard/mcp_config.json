@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "token-guard": {
-      "command": "python3",
-      "args": ["${PLUGIN_ROOT}/scripts/mcp_server.py"]
-    }
-  }
-}

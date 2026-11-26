@@ -21,7 +21,7 @@ Luồng: `1. Khảo sát → 2. Chọn phương án & hồ sơ → 3. Cài khung
 
 ## 3. Cài khung & Tuỳ biến
 - Copy theo hồ sơ đã chọn (**Core** hoặc **Scale-up**); thêm wrapper (`CLAUDE.md`, `.agents/rules/project.md`, `.agents/skills/*/SKILL.md`) nếu repo dùng nhiều tool.
-- *(Tuỳ chọn)* Sync `token-guard` (loại trừ `config.json`, `.state/`, `__pycache__`), thêm `__pycache__/` và `*.pyc` vào `.gitignore`.
+- Các plugin IDE cá nhân (như `token-guard`) nên cài global trên máy local (`~/.gemini/config/plugins/`), **không** commit vào repo sản phẩm.
 - Tuỳ biến: chọn **1 chuẩn nhánh thống nhất** cho cả repo (mặc định `work/<ID>-<slug>`, hoặc giữ chuẩn hiện có như `task/<ID>`), điền `MAP.md`, đặt Tiered Verification theo rủi ro (`T1/T2/T3`), project invariants, do-not-read list, legacy note, và approval gates.
 
 ## 4. Xác minh & Commit
@@ -38,7 +38,7 @@ Luồng: `1. Khảo sát → 2. Chọn phương án & hồ sơ → 3. Cài khung
   - Commit chỉ sửa doc của Reviewer (chạm duy nhất `work/<ID>-<slug>.md`) **không** làm mất hiệu lực `sha` đã test trước đó.
 - **`CHECKPOINT.md` (tùy chọn, Scale-up):** do Planner sở hữu, là **cache tiện lợi** (không phải SSOT), **chỉ cập nhật trên nhánh tích hợp sau merge** (qua commit/PR tuân thủ branch protection; cấm sửa trên nhánh `work/<ID>`). Phải có `checkpoint_sha`, `branch`, `generated_at`; đầu phiên kiểm tra `git merge-base --is-ancestor <checkpoint_sha> HEAD` trước khi đọc delta, nếu lệch/thiếu commit thì fallback về `MAP.md` + active work file.
 - **Đánh giá pilot (tùy chọn, không ngưỡng cứng):** có thể tham khảo nhẹ `review_rounds` (đếm từ commit `[<ID>][reviewer]`) và log token thụ động nếu sẵn có không tốn công; không ép thu thập 3 chỉ số hay ghi token vào handoff.
-- **Bảo trì:** định kỳ diff với template (**không** ghi đè `config.json` / `.state/`); rà lại `MAP.md` và `REUSE.md` (nếu dùng) sau mỗi 5–10 task.
+- **Bảo trì:** định kỳ diff với template; rà lại `MAP.md` và `REUSE.md` (nếu dùng) sau mỗi 5–10 task.
 
 ## Mẫu prompt khởi động (cho repo mới)
 > Khảo sát nhanh repo hiện tại (read-only: git branch/remote/status, `package.json` scripts, `docs/`, rule cũ nếu có) rồi đề xuất phương án áp dụng `blamag999/agent-workflow-template` (chọn Core/Scale-up và Full replace/Hybrid) theo hướng tối ưu token. Báo cáo ngắn gọn phương án trước khi thực hiện.
