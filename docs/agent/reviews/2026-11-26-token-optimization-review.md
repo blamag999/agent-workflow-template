@@ -81,3 +81,64 @@ AC1–AC4 are prerequisites for agreeing to the pilot plan. AC5–AC6 are prereq
 ## Handoff
 
 **To Planner (Não):** Revise the proposal and affected templates against F01–F04 on the same proposal branch, document responses to the open questions, and request independent review. **HOLD MERGE** until approval. Do not silently change the existing workflows in active projects.
+
+---
+
+## Addendum — Lean Agent Workflow v2 (2026-11-26)
+
+**Purpose:** Submit a simpler alternative for independent challenge. This addendum updates the recommended approach, not the original evidence or the F01–F04 findings above. **Status: PROPOSED / OPEN FOR COUNTER-REVIEW. HOLD MERGE.**
+
+### A. Updated position on token measurement (supersedes F02 severity/rollout interpretation)
+
+- **F02 revised severity: MEDIUM (measurement-method clarity), not HIGH.** A heavyweight benchmark is **not a prerequisite** for adopting a lightweight workflow. AC2 remains relevant only to claims of *measured* token savings; do not block ordinary implementation solely for lack of token telemetry.
+- Prefer **passive measurement** from existing Codex/API usage logs, when reliably available, with task ID, role, session ID, model, input/output/total tokens, and provenance; record cached-token semantics carefully to avoid double counting.
+- Sample 3–5 *normal* tasks opportunistically. No compulsory artificial reruns, paid API integration, separate backend/database, or token instrumentation inside every handoff.
+- Compare total tokens **per accepted task**, review/fix loops, quality and human overhead when comparable baseline exists. Do not report percentage savings if source data/model/task difficulty are not comparable. No log availability => mark *unmeasured*, never estimate as observed.
+- `token-guard` may estimate text/context size but **must not be represented as actual agent-session token usage** unless it receives verified provider usage data.
+- **Optimization must not cost more than its benefits.** Monitoring must be optional and nonblocking; keep high-risk verification mandatory independently of telemetry.
+
+### B. Proposed Lean v2 process
+
+Retain **Planner (Não) → Coder (Tay) → independent Reviewer (Mắt) → Planner (approve/close)**; Reviewer REQUEST_CHANGES loops to Coder. Keep **one branch + one shared work file per task**. Each code-mode role commits and pushes its handoff before a new role starts. Planner merges only on explicit APPROVE and applicable authorization gates. Do not weaken independent review, safety gates or repo-specific invariants.
+
+Five improvements to debate:
+
+| Priority | Improvement | Proposed rule | Safeguard |
+|---|---|---|---|
+| P0 | Role-scoped progressive context | Planner reads policy/state/task; Coder reads task/affected code/contracts; Reviewer reads task/diff/tests/evidence; closing Planner reads verdict and merge gates. | Expand to architecture, dependencies, tests, history when needed; never use diff-only reading as a completeness guarantee. |
+| P0 | Task work file as single source of truth | `docs/agent/work/<ID>.md` contains STATE (current), HANDOFF (latest), HISTORY (append-only). Avoid mandatory DELIVERY/REVIEW/ACCEPTANCE files per task. | Dedicated reports still allowed for complex, audit-sensitive, or externally required evidence. |
+| P1 | Risk-adaptive verification and evidence reuse | T1 targeted for low-risk change, T2 impacted for shared changes, T3 full gate for auth, DB, migrations, release, or merge according to project policy. | Reviewer independently checks provenance and test validity; reusing exact-SHA results is allowed only when tests/config/environment and policy make them applicable. |
+| P1 | Event-based checkpoint | Update summary after task merge or consequential architecture/phase change, rather than after each role session. | Checkpoint must carry provenance and safe stale/divergent-branch handling per F01. |
+| P2 | S/M/L task sizing | Keep same role separation but vary work-file verbosity, verification and checkpoint granularity by scope/risk. | S tasks still receive an independent Reviewer; risk, not line count alone, governs gates. |
+
+### C. Lean documentation boundaries
+
+- `AGENTS.md`: stable common rules, concise.
+- `MAP.md`: module/file location only; `REUSE.md`: actually reusable entry points only (optional for tiny repos).
+- `CHECKPOINT.md`: short repository-wide overview, updated by event, with provenance.
+- `INDEX.md`: completed work only.
+- `work/<ID>.md`: sole required task status/acceptance/handoff history; current STATE ≤25 lines, HISTORY not subject to a total-file line cap.
+- `archive/`: finished task records; extra reports are optional based on risk/compliance.
+
+Avoid duplicate status narratives across files. Preserve hybrid adoption for in-flight legacy tasks and never overwrite active work automatically.
+
+### D. Revised decision / gates proposed for counter-review
+
+1. **Approve pilot design** when F01, F03, F04 and the *methodological wording* of F02 are resolved consistently; no numerical token benchmark required.
+2. **Allow limited real-task adoption** using existing Git/Codex infrastructure. Passive usage logging only if already accessible without material overhead.
+3. **Judge broad adoption primarily on quality, successful acceptance, handoff burden and maintainability**, alongside any trustworthy token data. Do not advertise token reductions as verified without measurements.
+4. **Stop or revert the workflow change** if essential reviews/gates are bypassed, task history becomes ambiguous, or overhead materially worsens.
+
+### E. Questions to the counter-reviewer
+
+1. Does the single shared work file preserve enough independent review evidence and role accountability, including when a Reviewer must not alter implementation?
+2. Should S tasks always need a separate Reviewer session, or are there carefully bounded exceptions without undermining the three-role contract?
+3. Are the proposed event-based checkpoint triggers enough to recover reliably across sessions, branches, and divergent HEADs?
+4. What minimal test-evidence metadata is necessary to safely reuse a PASS on the exact same commit (test version, environment, configuration, timestamps)?
+5. Is S/M/L classification worth its overhead? Could risk-based T1/T2/T3 alone suffice?
+6. Can passive token collection be implemented with **zero required extra tool invocations per role**? If not, should it remain wholly out of scope?
+7. Which of the Lean v2 changes adds complexity without clear practical benefit, and should be dropped?
+
+### F. Counter-review expected response
+
+Return **ACCEPT / MODIFY / REJECT** for each of the five improvements, with concrete rationale and any contradictions with `AGENTS.md` / `ADOPT.md`. Distinguish **must-fix correctness** from **optional optimizations**. Propose the *smallest* viable final workflow, not a new automation subsystem. Record unresolved points in this review discussion or a linked follow-up. **No merge into `main` without approval.**
