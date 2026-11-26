@@ -241,6 +241,7 @@ function createHarness({ url = 'https://claude.ai/chat/c1', clipboard = undefine
   const location = {
     href: parsed.href,
     hostname: parsed.hostname,
+    pathname: parsed.pathname,
   };
 
   const document = {
@@ -284,11 +285,13 @@ function createHarness({ url = 'https://claude.ai/chat/c1', clipboard = undefine
       const u = new URL(nextUrl, location.href);
       location.href = u.href;
       location.hostname = u.hostname;
+      location.pathname = u.pathname;
     },
     replaceState(_state, _title, nextUrl) {
       const u = new URL(nextUrl, location.href);
       location.href = u.href;
       location.hostname = u.hostname;
+      location.pathname = u.pathname;
     },
   };
 
@@ -608,4 +611,72 @@ test('T8: Copy-only clipboard resolve/reject/missing, draft immutability, privac
   await hOk.document.getElementById('tg-web-root').shadowRoot.getElementById('pill').click();
   const saved = JSON.parse(hOk.storage.get('token_guard_web_cfg_v1'));
   assert.deepEqual(Object.keys(saved).sort(), ['crit', 'expanded', 'warn']);
+});
+
+test('T6/T7 regression (F02): ChatGPT App Shell multi-transcript scoping, pushState switch, and project unavailable', () => {
+  const h = createHarness({ url: 'https://chatgpt.com/c/conv-111' });
+  const main = new FakeElement('main');
+
+  // Keep-alive transcript 1 (active: conv-111) -> 300 tokens (100 user + 200 assistant)
+  const c1 = new FakeElement('div', {
+    'data-thread-find-target': 'conversation',
+    'data-rail-chat-transcript': 'true',
+    'data-chatgpt-conversation-selection-target': 'conv-111',
+  });
+  const t1User = new FakeElement('div', { 'data-virtualized-turn': 'true' });
+  t1User.appendChild(new FakeElement('div', { 'data-conversation-role': 'user' }, 'U'.repeat(380))); // 100 tok
+  const t1Asst = new FakeElement('div', { 'data-virtualized-turn': 'true' });
+  t1Asst.appendChild(new FakeElement('div', { 'data-conversation-role': 'assistant' }, 'A'.repeat(760))); // 200 tok
+  c1.appendChild(t1User);
+  c1.appendChild(t1Asst);
+
+  // Keep-alive transcript 2 (cached sibling: conv-222) -> 500 tokens via fallback [data-virtualized-turn]
+  const c2 = new FakeElement('div', {
+    'data-thread-find-target': 'conversation',
+    'data-rail-chat-transcript': 'true',
+    'data-chatgpt-conversation-selection-target': 'conv-222',
+  });
+  c2.appendChild(new FakeElement('div', { 'data-virtualized-turn': 'true' }, 'B'.repeat(1900))); // 500 tok
+
+  // Keep-alive transcript 3 (background hidden cached sibling: conv-333) -> 2000 tokens
+  const c3 = new FakeElement('div', {
+    'data-thread-find-target': 'conversation',
+    'data-chatgpt-conversation-selection-target': 'conv-333',
+    'aria-hidden': 'true',
+  });
+  c3.appendChild(new FakeElement('div', { 'data-conversation-role': 'assistant' }, 'Z'.repeat(7600)));
+
+  main.appendChild(c1);
+  main.appendChild(c2);
+  main.appendChild(c3);
+  h.body.appendChild(main);
+
+  h.runScript();
+  const shadow = h.document.getElementById('tg-web-root').shadowRoot;
+  // Must count ONLY conv-111 (300 tokens, 2 blocks), never conv-222 or conv-333
+  assert.match(shadow.getElementById('cardTokens').textContent, /~300 \/ ngưỡng 120,000/);
+  assert.match(shadow.getElementById('cardMeta').textContent, /2 khối/);
+
+  // Switching URL via pushState from /c/conv-111 -> /c/conv-222 updates to conv-222 only
+  h.history.pushState({}, '', '/c/conv-222');
+  assert.match(shadow.getElementById('cardTokens').textContent, /~500 \/ ngưỡng 120,000/);
+  assert.match(shadow.getElementById('cardMeta').textContent, /1 khối/);
+
+  // GPT scoped URL /g/<gpt-id>/c/<id> also matches conv-111
+  h.history.pushState({}, '', '/g/g-p-67890/c/conv-111');
+  assert.match(shadow.getElementById('cardTokens').textContent, /~300 \/ ngưỡng 120,000/);
+  assert.match(shadow.getElementById('cardMeta').textContent, /2 khối/);
+
+  // Non-conversation project page with multiple ambiguous visible keep-alive containers -> unavailable
+  h.history.pushState({}, '', '/g/g-p-67890/project');
+  assert.equal(shadow.getElementById('pillText').textContent, 'Chưa nhận diện DOM');
+  assert.equal(shadow.getElementById('cardTokens').textContent, 'Chưa nhận diện DOM');
+
+  // Non-conversation page with NO transcript containers (only main text) -> unavailable, never main.innerText
+  const hProj = createHarness({ url: 'https://chatgpt.com/g/g-p-67890/project' });
+  hProj.body.appendChild(new FakeElement('main', {}, 'Project overview '.repeat(1000)));
+  hProj.runScript();
+  const sProj = hProj.document.getElementById('tg-web-root').shadowRoot;
+  assert.equal(sProj.getElementById('pillText').textContent, 'Chưa nhận diện DOM');
+  assert.equal(sProj.getElementById('cardTokens').textContent, 'Chưa nhận diện DOM');
 });

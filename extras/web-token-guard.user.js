@@ -87,12 +87,102 @@
     });
   }
 
+  function getChatGPTConversationId() {
+    let pathname = '';
+    if (location && typeof location.pathname === 'string' && location.pathname) {
+      pathname = location.pathname;
+    } else if (location && typeof location.href === 'string') {
+      try {
+        pathname = new URL(location.href).pathname;
+      } catch (_) {
+        pathname = '';
+      }
+    }
+    const match = pathname.match(/(?:^|\/)c\/([^/?#]+)/);
+    if (!match) return '';
+    try {
+      return decodeURIComponent(match[1]);
+    } catch (_) {
+      return match[1];
+    }
+  }
+
+  function isHiddenOrInactiveContainer(node) {
+    let cur = node;
+    while (cur && cur.nodeType !== 9) {
+      if (cur.hidden === true || cur.inert === true) return true;
+      if (typeof cur.getAttribute === 'function') {
+        if (cur.getAttribute('hidden') !== null) return true;
+        if (cur.getAttribute('inert') !== null) return true;
+        if (cur.getAttribute('aria-hidden') === 'true') return true;
+      }
+      if (cur.style && (cur.style.display === 'none' || cur.style.visibility === 'hidden')) {
+        return true;
+      }
+      if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+        try {
+          const cs = window.getComputedStyle(cur);
+          if (cs && (cs.display === 'none' || cs.visibility === 'hidden')) {
+            return true;
+          }
+        } catch (_) {}
+      }
+      cur = cur.parentNode;
+    }
+    return false;
+  }
+
+  function findActiveChatGPTAppShellContainer(doc) {
+    const convId = getChatGPTConversationId();
+    if (convId) {
+      const targets = Array.from(doc.querySelectorAll('[data-chatgpt-conversation-selection-target]'));
+      const matched = targets.filter(
+        (el) => !isExcludedNode(el) && el.getAttribute('data-chatgpt-conversation-selection-target') === convId
+      );
+      if (matched.length === 1) {
+        return matched[0];
+      }
+      if (matched.length > 1) {
+        const visibleMatched = matched.filter((el) => !isHiddenOrInactiveContainer(el));
+        return visibleMatched.length === 1 ? visibleMatched[0] : null;
+      }
+    }
+
+    const candidates = dedupeTopLevel(
+      Array.from(
+        doc.querySelectorAll('[data-thread-find-target="conversation"], [data-rail-chat-transcript="true"]')
+      )
+    ).filter((el) => {
+      if (isHiddenOrInactiveContainer(el)) return false;
+      if (convId && typeof el.getAttribute === 'function') {
+        const targetId = el.getAttribute('data-chatgpt-conversation-selection-target');
+        if (targetId && targetId !== convId) return false;
+      }
+      return true;
+    });
+
+    return candidates.length === 1 ? candidates[0] : null;
+  }
+
   function getChatGPTMessages(doc) {
     let found = Array.from(doc.querySelectorAll('[data-message-author-role]'));
     if (found.length === 0) {
       found = Array.from(doc.querySelectorAll('article[data-testid^="conversation-turn"]'));
     }
-    return dedupeTopLevel(found);
+    if (found.length > 0) {
+      return dedupeTopLevel(found);
+    }
+
+    const container = findActiveChatGPTAppShellContainer(doc);
+    if (!container) {
+      return [];
+    }
+
+    let scoped = Array.from(container.querySelectorAll('[data-conversation-role]'));
+    if (scoped.length === 0) {
+      scoped = Array.from(container.querySelectorAll('[data-virtualized-turn]'));
+    }
+    return dedupeTopLevel(scoped);
   }
 
   function getClaudeMessages(doc) {
