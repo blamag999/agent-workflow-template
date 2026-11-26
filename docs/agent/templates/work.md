@@ -13,6 +13,8 @@ round: 0/3
 **Goal:** <1-2 lines>
 
 **Scope:** in: <...> | out: <...>
+**Entry points:** `path:line`
+**Reuse:** <util/component có sẵn>
 
 **Acceptance criteria:**
 - [ ] <measurable>

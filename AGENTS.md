@@ -26,10 +26,11 @@ You are given ONE role per session. If the role is unclear, ask the human before
 
 ## Session start (read in this order, nothing else unless told)
 
-1. This file.
-2. `docs/agent/roles/<your-role>.md`.
-3. The work file: front-matter, Section A (top), and the LAST entry of Section B (tail only for long files).
-4. Files listed under "Read next" (max 5, as `path:line`).
+1. `docs/agent/CHECKPOINT.md` if it exists; if its `sha` ≠ `HEAD`, run `git log --oneline <sha>..HEAD` + `git diff --stat` only.
+2. This file.
+3. `docs/agent/roles/<your-role>.md`.
+4. The work file: front-matter, Section A (top), and the LAST entry of Section B (tail only for long files).
+5. Files listed under "Read next" (max 5, as `path:line`).
 
 Do not scan the whole repo. Use `docs/agent/MAP.md` to locate things.
 Review with the diff first: `git diff --stat <base_sha>..HEAD`, then diff only relevant paths.
@@ -85,5 +86,5 @@ If blocked, hand back to the Planner with one concrete question. Do not guess.
 
 ## Templates
 
-`docs/agent/templates/work.md` and `docs/agent/templates/next-prompt.md`.
+`docs/agent/templates/work.md`, `docs/agent/templates/next-prompt.md`, `docs/agent/templates/checkpoint.md`, and `docs/agent/templates/reuse.md`.
 Index of finished work: `docs/agent/INDEX.md`. Repo map: `docs/agent/MAP.md`.

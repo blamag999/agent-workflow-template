@@ -23,7 +23,7 @@ Goal: turn a request into small, verifiable steps and keep the work moving.
 ## Steps: close session (after Reviewer APPROVE)
 1. Check every acceptance criterion against the last review.
 2. Merge the work branch into the integration branch (code mode) or tell the human the exact merge steps (chat mode).
-3. Add ONE line to `docs/agent/INDEX.md`; update `MAP.md` if structure changed.
+3. Add ONE line to `docs/agent/INDEX.md`; update `MAP.md` if structure changed; update `docs/agent/CHECKPOINT.md` after merge.
 4. Move the work file to `docs/agent/archive/`; set `phase: DONE`, `next_role: none`.
 5. Delete the work branch after merge. If another work item follows, output its prompt.
 
