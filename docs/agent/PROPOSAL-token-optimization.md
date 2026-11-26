@@ -1,6 +1,6 @@
 # Đề xuất: Lean Agent Workflow v2 (Tối ưu Token & Trình bày Markdown)
 
-> **Status: APPROVED FOR PILOT (candidate `376fe82` — 6/6 Reviewer Convergence; HOLD MERGE vào `main`)**
+> **Status: MERGED INTO `main` (Baseline Lean Agent Workflow v2 — sẵn sàng pilot và điều chỉnh dựa trên số liệu thực tế)**
 
 **TL;DR:** Chọn hồ sơ **Core / Scale-up** 1 lần khi cài repo · Work file SSOT (`front-matter / Section A ≤25 dòng / Section B` entry ≤15 dòng & ≤150 từ) · Đọc ngữ cảnh tăng tiến (*progressive context*) · Kiểm thử rủi ro `T1/T2/T3` + tái dùng chứng cứ 5 trường · `CHECKPOINT.md` tùy chọn, chỉ cập nhật trên nhánh tích hợp sau merge.
 
