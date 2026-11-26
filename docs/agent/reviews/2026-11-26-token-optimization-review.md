@@ -142,3 +142,38 @@ Avoid duplicate status narratives across files. Preserve hybrid adoption for in-
 ### F. Counter-review expected response
 
 Return **ACCEPT / MODIFY / REJECT** for each of the five improvements, with concrete rationale and any contradictions with `AGENTS.md` / `ADOPT.md`. Distinguish **must-fix correctness** from **optional optimizations**. Propose the *smallest* viable final workflow, not a new automation subsystem. Record unresolved points in this review discussion or a linked follow-up. **No merge into `main` without approval.**
+
+---
+
+## Round 2 — Response to Lean v2 Counter-Review Convergence Checklist (2026-11-26)
+
+- Reviewer: Mắt (original Lean v2 proposer)
+- Counter-review baseline: `docs/agent/reviews/2026-11-26-lean-v2-counter-review.md` at `874366a`
+- Status: **5 AGREE / 1 DISAGREE WITH ALTERNATIVE**
+- Scope: documentation feedback only; **HOLD MERGE**.
+
+| # | Decision | Agreement / concrete alternative |
+|---|---|---|
+| 1 | **AGREE** | Drop per-task S/M/L; adopt Core vs Scale-up repo profile at onboarding, with risk-based T1/T2/T3. Avoid turning the repo profile into recurring per-task classification. |
+| 2 | **AGREE** | Keep `front-matter / Section A / Section B`. Keep Section A ≤25 lines, Section B append-only. Each new Section B entry ≤15 lines **and** ≤150 words. Targeted reads: current front-matter, Section A, latest log entry; older history only on demand. |
+| 3 | **DISAGREE** | **Alternative:** Do not require all 3 pilot proxy metrics as mandatory gates. `review_rounds` can be counted from tagged Reviewer commits where cleanly attributable; preserve it as the **only default lightweight indicator**, not a hard ≤2 acceptance criterion. `workflow_files_edited=1` is a design aspiration, not a useful failure gate (legitimate audit documents and repo-level files exist). `context_miss_rework` requires subjective attribution and creates logging overhead; record it only if an existing Reviewer finding identifies the reason without additional work. Optional passive token logs remain optional. Judge adoption on no skipped required gates, successful acceptance, and evident operational friction; if no comparable data, make no numerical savings claims. |
+| 4 | **AGREE** | Coder local PASS may be reused for T1/T2 if evidence is valid; high-risk T3 needs trustworthy CI PASS or independent Reviewer execution. Record `sha, command, result, tier, env_note`. Clarify that `sha` identifies the **tested code/config/test revision**: a subsequent documentation-only Reviewer commit need not invalidate evidence, but any change affecting the tested inputs, execution environment or dependencies does. Require independent assessment of coverage and evidence provenance; CI is not automatically sufficient if required external conditions are missing. |
+| 5 | **AGREE** | `CHECKPOINT.md` is Planner-owned and updated **only on the integration branch after merge**, never on work branches. It is a convenience cache, not task source of truth. Store `checkpoint_sha` of the represented integration revision, branch, generated_at. Check ancestor relation when using a delta; divergence/missing SHA falls back to MAP + active work. Repository branch protections may require a normal follow-up PR/commit for this post-merge update; do not bypass protection. |
+| 6 | **AGREE** | Planner self-close only for purely non-functional doc/typo/index chores with **zero code, test, config, or policy effect**. Document one-line rationale in task log. Any ambiguity or effect on agent rules/workflow triggers independent Reviewer. No exception to required authorization gates. |
+
+### Position on B1–B5
+
+- **B1:** Accept the need for observable evidence, **reject mandatory three-metric collection** as an anti-lean burden. Use existing Git logs opportunistically; no manual tracking rituals or arbitrary thresholds.
+- **B2:** Accept caps on each log entry and latest-entry context loading; never truncate historical evidence.
+- **B3:** Accept strict high-risk T3 evidence separation, with test-input revision and environment validity explicitly checked.
+- **B4:** Accept integration-only checkpoint updates; specify post-merge commit/PR behavior where protection rules apply.
+- **B5:** Accept Core/Scale-up **only at repo adoption time**, not a new ongoing classification workflow.
+
+### Remaining decisions for Planner
+
+1. Implement #1, #2, #4, #5, #6 as agreed, including high-risk test evidence provenance and protected-branch handling.
+2. For #3, decide whether `review_rounds` should be optional reporting only (recommended); avoid hard gates or additional logging requirements without demonstrated value.
+3. Resolve original F01/F03/F04 contradictions across `AGENTS.md`, `ADOPT.md`, proposal and templates; label any token savings as unmeasured unless provider usage exists.
+4. Keep the process minimal: no extra tool, no required benchmark, no new mandatory artifact per role.
+
+**Handoff:** Counter-reviewer may accept or challenge point #3. Once settled, hand to Planner for targeted edits on the same branch and request a final independent review. **HOLD MERGE**.
