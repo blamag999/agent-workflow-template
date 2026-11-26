@@ -72,6 +72,28 @@
 4. **Risk-Based Verification:** `T1/T2/T3` only (no S/M/L). Reuse exact-SHA PASS when 5-field evidence (`sha`, `command`, `result`, `tier`, `env_note`) is present and valid.
 5. **Event-Based Checkpoint (Optional):** Update `CHECKPOINT.md` only on task merge or major phase/architecture change, with F01 provenance.
 
+## 6. Round 2 — Deep Critique of Blind Spots & Convergence Proposal
+
+To reach consensus on the cleanest possible workflow, here are 5 subtle blind spots in Addendum — Lean v2 that need explicit agreement before locking the spec:
+
+| # | Blind Spot in Lean v2 | Concrete Risk | Proposed Fix for Consensus |
+|---|---|---|---|
+| B1 | **Subjective pilot gates (§D.3):** "handoff burden" and "maintainability" have no objective metric when token telemetry is absent. | Pilot ends in subjective debate with no clear pass/fail bar. | Adopt **3 zero-cost Git-native proxy metrics**: (1) `review_rounds` per task (count of `[<ID>][reviewer]` commits; target ≤2), (2) `workflow_files_edited` per task (target = 1: `work/<ID>.md`), (3) `context_miss_rework` (count of `REQUEST_CHANGES` caused by missed callers/contracts). |
+| B2 | **Unbounded `Section B` growth (§C):** Append-only history with no per-entry cap + loose `~300 words` rule in `AGENTS.md` L73. | After 2–3 rounds, agents that read the whole work file burn tokens on stale history. | Keep `Section B` append-only, tighten per-entry cap to **≤15 lines / ≤150 words**, and require targeted tail-read (front-matter + Section A + **last Section B entry only**). |
+| B3 | **Local vs CI evidence reuse (§B P1):** Exact-SHA PASS reuse does not distinguish Coder's local environment (`.env`, local DB/Wrangler state) from CI. | False-positive PASS on high-risk changes (auth, DB migrations, prod config). | Split reuse rule: **CI PASS on exact `HEAD`** → reusable for T1/T2/T3. **Coder local PASS on exact `HEAD`** → reusable for T1/T2 only; T3 high-risk gates still require CI or independent Reviewer run. |
+| B4 | **Parallel-branch merge conflicts on `CHECKPOINT.md` (§B P1):** Neither `AGENTS.md` nor Lean v2 forbids editing `CHECKPOINT.md` on work branches. | Two parallel tasks editing `CHECKPOINT.md` will always conflict on merge. | Add explicit rule: **`CHECKPOINT.md` is integration-branch-only** — updated *only* by Planner on the integration branch after merge, never on `work/<ID>` branches. |
+| B5 | **Repo-level file sprawl (§C):** 5 repo-level docs (`AGENTS.md`, `MAP.md`, `REUSE.md`, `CHECKPOINT.md`, `INDEX.md`) is still heavy for small repos. | Small repos abandon the template due to doc maintenance. | Replace per-task S/M/L sizing with a **2-Tier Repo Profile** chosen once at adoption: **Core** (`AGENTS.md` + `MAP.md` + `work/<ID>.md`) vs **Scale-up** (+ optional `CHECKPOINT.md`, `REUSE.md`, `INDEX.md`). |
+
+### Convergence Checklist (For the Other Reviewer to Confirm)
+
+Please reply **AGREE / DISAGREE (+ alternative)** on these 6 points so we can finalize Lean v2:
+1. Drop **P2 (S/M/L per-task sizing)** and use **2-Tier Repo Profile (Core vs Scale-up)** + risk-based `T1/T2/T3` instead?
+2. Keep existing `AGENTS.md` naming (`front-matter / Section A / Section B`) and tighten `Section B` entries to **≤15 lines / ≤150 words**?
+3. Adopt the **3 zero-cost Git-native pilot metrics** (B1) alongside optional passive token logs?
+4. Restrict **Coder local PASS reuse** to T1/T2, while T3 high-risk gates require CI PASS or independent Reviewer run (B3)?
+5. Enforce **`CHECKPOINT.md` is integration-branch-only** (never edited on work branches) + F01 ancestry check (B4)?
+6. Allow **Planner self-close** *only* for pure non-functional doc/typo/index chores (zero code/config/test/policy impact)?
+
 ## Handoff
 
-**To Planner (Não):** Apply the 4 **Must-Fix Correctness** items to `AGENTS.md`, `docs/agent/ADOPT.md`, and `docs/agent/PROPOSAL-token-optimization.md` (and drop P2 S/M/L), then request final sign-off for pilot. **HOLD MERGE** into `main`.
+**To Other Reviewer (Mắt — Round 2 Convergence):** Review §1–§6 of this document and respond to the 6 Convergence Checklist items above (AGREE / DISAGREE + concrete counter-proposal). Once both reviewers converge, hand to Planner (Não) to apply the agreed edits. **HOLD MERGE** into `main`.
