@@ -8,19 +8,19 @@ next_role: Coder     # Planner | Coder | Reviewer | none
 round: 0/3
 ---
 
-# A. CURRENT STATE (overwrite each session, max 25 lines)
+# A. CURRENT STATE (overwrite each session, <=25 lines)
 
 **Goal:** <1-2 lines>
 
 **Scope:** in: <...> | out: <...>
 **Entry points:** `path:line`
-**Reuse:** <util/component có sẵn>
+**Reuse:** <existing util/component or none>
 
 **Acceptance criteria:**
 - [ ] <measurable>
 
 **Verify (task):** `<targeted command>` -> expected `<result>`
-**Verify (gate):** `<full command or "CI / none">` (run before APPROVE/merge or high-risk changes)
+**Verify (gate):** `<full command or "CI / none">` (high-risk T3 requires trustworthy CI PASS or independent Reviewer run)
 
 **Next task (3-5 bullets):**
 - [ ] <F1 [blocker] ... or next concrete step>
@@ -33,10 +33,10 @@ round: 0/3
 ## #1 Planner -> Coder · <date>
 Requirements, constraints, how to verify.
 
-<!-- Entry format:
+<!-- Entry format (<=15 lines AND <=150 words; tail-read loads latest entry only):
 ## #<n> <From> -> <To> · <date>
-Did: ... (path:line)
-Verified: `<command>` -> <result>
+Did: ... (`path:line`)
+Verified: sha=<tested_sha> | cmd=`<command>` | res=<PASS N/N> | tier=<T1|T2|T3> | env=<local|CI url|note>
 Risks / points to inspect: ...
 Not done / out of scope: ...
 Handoff to: <role>
