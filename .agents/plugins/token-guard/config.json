@@ -1,0 +1,9 @@
+{
+  "warn_threshold": 80000,
+  "critical_threshold": 120000,
+  "spike_threshold": 15000,
+  "show_every_turn": false,
+  "red_threshold_mode": "auto_handoff_and_new_chat",
+  "debounce_delta": 30000,
+  "poll_interval_ms": 2000
+}

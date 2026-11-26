@@ -1,0 +1,18 @@
+{
+  "token-guard-tracker": {
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "python3 ./scripts/token_tracker.py",
+        "timeout": 10
+      }
+    ],
+    "PostInvocation": [
+      {
+        "type": "command",
+        "command": "python3 ./scripts/token_tracker.py",
+        "timeout": 10
+      }
+    ]
+  }
+}

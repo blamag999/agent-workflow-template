@@ -1,25 +1,20 @@
-# agent-workflow-template
+# Agent Workflow Template
 
-A reusable repo workflow for AI agents with three roles: Planner (Não), Coder (Tay), Reviewer (Mắt).
-Work moves between roles through one shared work file per branch.
+Template chuẩn cho workflow AI Agent, bao gồm plugin **Token Guard v2.0.0** (Antigravity MCP App Side Pane + Sidebar trái, tự động `auto_handoff_and_new_chat`, và Userscript cho ChatGPT / Claude Web).
 
-## Use it
-1. Copy `AGENTS.md` and `docs/agent/` into your repo (keep `work/` and `archive/` empty).
-2. Start a Planner session: "You are the Planner. Read AGENTS.md. Task: <request>."
-3. Each session ends with a NEXT PROMPT (in the work file and in chat). Give it to the next agent.
+## Cài đặt & Cập nhật tự động Token Guard (1 lệnh)
 
-## Flow
-```
-PLAN (Planner) -> CODE (Coder) -> REVIEW (Reviewer)
-                                     |- REQUEST CHANGES -> FIX (Coder) -> REVIEW ...
-                                     '- APPROVE -> CLOSE and merge (Planner) -> DONE
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/blamag999/agent-workflow-template/main/scripts/install-token-guard.ps1 | iex
 ```
 
-## Conventions
-- One work item = one branch `work/<ID>-<slug>` = one file `docs/agent/work/<ID>-<slug>.md`.
-- One session = one role = one log entry = one handoff.
-- Only the Planner merges, after the Reviewer approves. Max 3 review rounds.
-- Nothing stays local: every session ends with all work committed AND pushed to the remote branch.
-- Works in code mode (repo access) and chat mode (paste files, commit the returned work file).
+**macOS / Linux:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/blamag999/agent-workflow-template/main/scripts/install-token-guard.sh | bash
+```
+*(Mặc định giữ nguyên `config.json` hiện có nếu đã cài; thêm `-Force` / `--force` để ghi đè cấu hình mặc định).*
 
-See `AGENTS.md` for the full rules.
+## Cài đặt cho ChatGPT Web & Claude Web (Tampermonkey)
+Mở link sau để Tampermonkey tự cài đặt và tự động cập nhật khi có phiên bản mới:
+- https://raw.githubusercontent.com/blamag999/agent-workflow-template/main/extras/web-token-guard.user.js
